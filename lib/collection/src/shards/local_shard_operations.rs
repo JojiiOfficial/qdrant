@@ -17,7 +17,7 @@ use crate::operations::types::{
     CountRequestInternal, CountResult, PointRequestInternal, QueryEnum, Record, UpdateResult,
     UpdateStatus,
 };
-use crate::operations::CollectionUpdateOperations;
+use crate::operations::{CollectionUpdateOperations, TaggedOperation};
 use crate::optimizers_builder::DEFAULT_INDEXING_THRESHOLD_KB;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
@@ -122,10 +122,11 @@ impl ShardOperation for LocalShard {
             let update_sender = self.update_sender.load();
             let channel_permit = update_sender.reserve().await?;
             let mut wal_lock = self.wal.lock();
+            let operation = TaggedOperation::new(operation);
             let operation_id = wal_lock.write(&operation)?;
             channel_permit.send(UpdateSignal::Operation(OperationData {
                 op_num: operation_id,
-                operation,
+                operation: operation.operation,
                 sender: callback_sender,
                 wait,
             }));

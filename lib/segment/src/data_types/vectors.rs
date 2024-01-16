@@ -13,6 +13,7 @@ use crate::vector_storage::query::discovery_query::DiscoveryQuery;
 use crate::vector_storage::query::reco_query::RecoQuery;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum Vector {
     Dense(DenseVector),
@@ -206,6 +207,7 @@ pub fn only_default_vector(vec: &[VectorElementType]) -> NamedVectors {
 
 /// Full vector data per point separator with single and multiple vector modes
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum VectorStruct {
     Single(DenseVector),
@@ -413,9 +415,9 @@ impl Validate for NamedVectorStruct {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone)]
-#[serde(rename_all = "snake_case")]
-#[serde(untagged)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum BatchVectorStruct {
     Single(Vec<DenseVector>),
     Multi(HashMap<String, Vec<Vector>>),

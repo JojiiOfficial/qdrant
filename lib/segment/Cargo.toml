@@ -12,6 +12,7 @@ edition = "2021"
 multiling-chinese = ["charabia/chinese"]
 multiling-japanese = ["charabia/japanese"]
 multiling-korean = ["charabia/korean"]
+proptest = ["dep:proptest", "dep:proptest-derive", "sparse/proptest"]
 
 [dev-dependencies]
 criterion = "0.5"
@@ -71,6 +72,9 @@ memory = { path = "../common/memory" }
 sparse = { path = "../sparse" }
 
 tracing = { version = "0.1", features = ["async-await"], optional = true }
+
+proptest = { version = "1.4", optional = true }
+proptest-derive = { version = "0.4", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 cgroups-rs = "0.3"

@@ -23,7 +23,8 @@ pub struct UpdateVectors {
     pub shard_key: Option<ShardKeySelector>,
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct PointVectors {
     /// Point id
     pub id: PointIdType,
@@ -61,7 +62,8 @@ pub struct DeleteVectors {
     pub shard_key: Option<ShardKeySelector>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Validate, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Validate)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct UpdateVectorsOp {
     /// Points with named vectors
     #[validate]
@@ -69,7 +71,8 @@ pub struct UpdateVectorsOp {
     pub points: Vec<PointVectors>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum VectorOperations {
     /// Update vectors
@@ -77,6 +80,7 @@ pub enum VectorOperations {
     /// Delete vectors if exists
     DeleteVectors(PointIdsList, Vec<String>),
     /// Delete vectors by given filter criteria
+    #[cfg_attr(test, proptest(skip))]
     DeleteVectorsByFilter(Filter, Vec<String>),
 }
 

@@ -324,7 +324,11 @@ impl Inner {
         let (pending_count, batch) = {
             let wal = self.wrapped_shard.wal.lock();
             let items_left = wal.last_index().saturating_sub(start_index - 1);
-            let batch = wal.read(start_index).take(BATCH_SIZE).collect::<Vec<_>>();
+            let batch = wal
+                .read(start_index)
+                .take(BATCH_SIZE)
+                .map(|(id, op)| (id, op.operation))
+                .collect::<Vec<_>>();
             (items_left, batch)
         };
 

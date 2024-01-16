@@ -22,14 +22,14 @@ use validator::Validate;
 use crate::hash_ring::HashRing;
 use crate::shards::shard::ShardId;
 
-#[derive(Debug, Deserialize, Serialize, Validate, Default, Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct CreateIndex {
     pub field_name: String,
     pub field_schema: Option<PayloadFieldSchema>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FieldIndexOperations {
     /// Create index for payload field
@@ -38,13 +38,32 @@ pub enum FieldIndexOperations {
     DeleteIndex(String),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "snake_case")]
-#[serde(untagged)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct TaggedOperation {
+    #[serde(flatten)]
+    pub operation: CollectionUpdateOperations,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tag: Option<String>,
+}
+
+impl TaggedOperation {
+    pub fn new(operation: impl Into<CollectionUpdateOperations>) -> Self {
+        Self {
+            operation: operation.into(),
+            tag: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum CollectionUpdateOperations {
     PointOperation(point_ops::PointOperations),
     VectorOperation(vector_ops::VectorOperations),
     PayloadOperation(payload_ops::PayloadOps),
+    #[cfg_attr(test, proptest(skip))]
     FieldIndexOperation(FieldIndexOperations),
 }
 
@@ -179,18 +198,25 @@ impl CollectionUpdateOperations {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
+    use proptest::prelude::*;
 
     use super::*;
 
-    #[test]
-    fn test_deserialize() {
-        let op =
-            CollectionUpdateOperations::PayloadOperation(payload_ops::PayloadOps::ClearPayload {
-                points: vec![1.into(), 2.into(), 3.into()],
-            });
+    proptest::proptest! {
+        #[test]
+        fn tagged_operation_serde(
+            operation in any::<CollectionUpdateOperations>(),
+            tag in any::<Option<String>>(),
+        ) {
+            let input = TaggedOperation {
+                operation,
+                tag,
+            };
 
-        let json = serde_json::to_string_pretty(&op).unwrap();
-        println!("{json}")
+            let json = serde_json::to_string(&input).unwrap();
+            let output: TaggedOperation = serde_json::from_str(&json).unwrap();
+
+            assert_eq!(input, output);
+        }
     }
 }

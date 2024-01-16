@@ -7,6 +7,7 @@ use crate::common::types::{DimId, DimWeight};
 
 /// Sparse vector structure
 #[derive(Debug, PartialEq, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct SparseVector {
     /// indices must be unique

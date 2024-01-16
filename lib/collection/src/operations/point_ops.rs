@@ -33,7 +33,8 @@ pub enum WriteOrdering {
     Strong,
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Validate)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema, Validate)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct PointStruct {
     /// Point id
@@ -70,7 +71,8 @@ impl TryFrom<Record> for PointStruct {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct Batch {
     pub ids: Vec<PointIdType>,
@@ -96,7 +98,8 @@ impl Batch {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Validate, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema, Validate)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct PointIdsList {
     pub points: Vec<PointIdType>,
@@ -139,7 +142,7 @@ impl Validate for PointsSelector {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct PointSyncOperation {
     /// Minimal id of the sync range
     pub from_id: Option<PointIdType>,
@@ -149,6 +152,7 @@ pub struct PointSyncOperation {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Validate, JsonSchema)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct PointsBatch {
     #[validate]
     pub batch: Batch,
@@ -157,6 +161,7 @@ pub struct PointsBatch {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema, Validate)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct PointsList {
     #[validate]
     pub points: Vec<PointStruct>,
@@ -191,7 +196,8 @@ impl PointInsertOperations {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum PointInsertOperationsInternal {
     /// Inset points from a batch.
@@ -305,7 +311,8 @@ impl From<Vec<PointStruct>> for PointInsertOperationsInternal {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum PointOperations {
     /// Insert or update points
@@ -313,8 +320,10 @@ pub enum PointOperations {
     /// Delete point if exists
     DeletePoints { ids: Vec<PointIdType> },
     /// Delete points by given filter criteria
+    #[cfg_attr(test, proptest(skip))]
     DeletePointsByFilter(Filter),
     /// Points Sync
+    #[cfg_attr(test, proptest(skip))]
     SyncPoints(PointSyncOperation),
 }
 

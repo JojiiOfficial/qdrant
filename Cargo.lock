@@ -1074,6 +1074,8 @@ dependencies = [
  "ordered-float 4.2.0",
  "parking_lot",
  "pprof",
+ "proptest",
+ "proptest-derive",
  "rand 0.8.5",
  "rmp-serde",
  "rstest",
@@ -3574,6 +3576,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "proptest-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf16337405ca084e9c78985114633b6827711d22b9e6ef6c6c0d665eb3f0b6e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.107",
+]
+
+[[package]]
 name = "prost"
 version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4513,6 +4526,7 @@ dependencies = [
  "pprof",
  "procfs",
  "proptest",
+ "proptest-derive",
  "quantization",
  "rand 0.8.5",
  "rand_distr",
@@ -4794,6 +4808,8 @@ dependencies = [
  "memmap2 0.9.3",
  "memory",
  "ordered-float 4.2.0",
+ "proptest",
+ "proptest-derive",
  "rand 0.8.5",
  "schemars",
  "serde",
