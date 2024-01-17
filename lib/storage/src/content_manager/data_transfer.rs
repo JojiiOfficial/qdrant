@@ -119,7 +119,7 @@ async fn replicate_shard_data(
             handle_get_collection(collections_read.get(target_collection_name))?;
 
         target_collection
-            .update_from_client_simple(upsert_request.into(), false, WriteOrdering::default())
+            .update_from_client_simple(upsert_request, false, WriteOrdering::default())
             .await?;
 
         if offset.is_none() {
@@ -221,7 +221,7 @@ pub async fn transfer_indexes(
             }),
         );
         target_collection
-            .update_from_client_simple(request.into(), false, WriteOrdering::default())
+            .update_from_client_simple(request, false, WriteOrdering::default())
             .await?;
     }
 

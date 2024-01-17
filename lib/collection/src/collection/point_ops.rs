@@ -72,11 +72,11 @@ impl Collection {
 
     pub async fn update_from_client_simple(
         &self,
-        operation: TaggedOperation,
+        operation: impl Into<TaggedOperation>,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
-        self.update_from_client(operation, wait, ordering, None)
+        self.update_from_client(operation.into(), wait, ordering, None)
             .await
     }
 
