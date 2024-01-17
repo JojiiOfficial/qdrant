@@ -544,6 +544,7 @@ pub async fn do_batch_update_points(
     Ok(results)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn do_create_index_internal(
     toc: &TableOfContent,
     collection_name: &str,
