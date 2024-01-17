@@ -110,22 +110,6 @@ impl<'de> serde::Deserialize<'de> for ExtendedPointId {
     }
 }
 
-#[cfg(feature = "proptest")]
-impl proptest::arbitrary::Arbitrary for ExtendedPointId {
-    type Parameters = ();
-    type Strategy = proptest::strategy::BoxedStrategy<Self>;
-
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        use proptest::prelude::*;
-
-        prop_oneof![
-            any::<u64>().prop_map(Self::NumId),
-            any::<u128>().prop_map(|uuid| Self::Uuid(uuid::Uuid::from_u128(uuid))),
-        ]
-        .boxed()
-    }
-}
-
 /// Type of point index across all segments
 pub type PointIdType = ExtendedPointId;
 
@@ -985,28 +969,6 @@ impl From<Map<String, Value>> for Payload {
     }
 }
 
-#[cfg(feature = "proptest")]
-impl proptest::arbitrary::Arbitrary for Payload {
-    type Parameters = ();
-    type Strategy = proptest::strategy::BoxedStrategy<Self>;
-
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        use proptest::strategy::Strategy as _;
-
-        proptest::option::of(("[[:alphanum:]]{1,16}", "[[:alphanum:]]{1,16}"))
-            .prop_map(|key_val| {
-                let mut payload = serde_json::Map::new();
-
-                if let Some((key, val)) = key_val {
-                    payload.insert(key, val.into());
-                }
-
-                Self(payload)
-            })
-            .boxed()
-    }
-}
-
 #[derive(Clone)]
 pub enum OwnedPayloadRef<'a> {
     Ref(&'a Map<String, Value>),
@@ -1094,7 +1056,7 @@ pub enum JsonPayload {
 }
 
 /// All possible names of payload types
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PayloadSchemaType {
     Keyword,
@@ -1106,14 +1068,14 @@ pub enum PayloadSchemaType {
 }
 
 /// Payload type with parameters
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PayloadSchemaParams {
     Text(TextIndexParams),
     Integer(IntegerIndexParams),
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PayloadFieldSchema {
     FieldType(PayloadSchemaType),
@@ -3130,7 +3092,6 @@ mod tests {
 pub type TheMap<K, V> = BTreeMap<K, V>;
 
 #[derive(Deserialize, Serialize, JsonSchema, Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[serde(untagged)]
 pub enum ShardKey {
     Keyword(String),

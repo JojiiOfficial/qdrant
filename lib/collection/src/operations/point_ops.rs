@@ -34,7 +34,6 @@ pub enum WriteOrdering {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema, Validate)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct PointStruct {
     /// Point id
@@ -72,7 +71,6 @@ impl TryFrom<Record> for PointStruct {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct Batch {
     pub ids: Vec<PointIdType>,
@@ -99,7 +97,6 @@ impl Batch {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema, Validate)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub struct PointIdsList {
     pub points: Vec<PointIdType>,
@@ -152,7 +149,6 @@ pub struct PointSyncOperation {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Validate, JsonSchema)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct PointsBatch {
     #[validate]
     pub batch: Batch,
@@ -161,7 +157,6 @@ pub struct PointsBatch {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema, Validate)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct PointsList {
     #[validate]
     pub points: Vec<PointStruct>,
@@ -197,7 +192,6 @@ impl PointInsertOperations {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum PointInsertOperationsInternal {
     /// Inset points from a batch.
@@ -312,7 +306,6 @@ impl From<Vec<PointStruct>> for PointInsertOperationsInternal {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum PointOperations {
     /// Insert or update points
@@ -320,10 +313,8 @@ pub enum PointOperations {
     /// Delete point if exists
     DeletePoints { ids: Vec<PointIdType> },
     /// Delete points by given filter criteria
-    #[cfg_attr(test, proptest(skip))]
     DeletePointsByFilter(Filter),
     /// Points Sync
-    #[cfg_attr(test, proptest(skip))]
     SyncPoints(PointSyncOperation),
 }
 

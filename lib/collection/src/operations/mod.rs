@@ -57,13 +57,11 @@ impl TaggedOperation {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum CollectionUpdateOperations {
     PointOperation(point_ops::PointOperations),
     VectorOperation(vector_ops::VectorOperations),
     PayloadOperation(payload_ops::PayloadOps),
-    #[cfg_attr(test, proptest(skip))]
     FieldIndexOperation(FieldIndexOperations),
 }
 
@@ -199,24 +197,178 @@ impl CollectionUpdateOperations {
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
+    use segment::types::*;
 
     use super::*;
 
+    use super::payload_ops::*;
+    use super::point_ops::*;
+    use super::vector_ops::*;
+
     proptest::proptest! {
         #[test]
-        fn tagged_operation_serde(
-            operation in any::<CollectionUpdateOperations>(),
-            tag in any::<Option<String>>(),
-        ) {
-            let input = TaggedOperation {
-                operation,
-                tag,
+        fn tagged_operation_serde(tagged in any::<TaggedOperation>()) {
+            // Assert that `TaggedOperation` can be serialized
+            let input = serde_json::to_string(&tagged).unwrap();
+            let output: TaggedOperation = serde_json::from_str(&input).unwrap();
+            assert_eq!(tagged, output);
+
+            // Assert that `TaggedOperation` can be deserialized from `CollectionUpdateOperation`
+            let input = serde_json::to_string(&tagged.operation).unwrap();
+            let output: TaggedOperation = serde_json::from_str(&input).unwrap();
+            assert_eq!(tagged.operation, output.operation);
+
+            // Assert that `CollectionUpdateOperation` serializes into JSON object with a single key
+            // (e.g., `{ "upsert_points": <upsert points object> }`)
+            match serde_json::to_value(&tagged.operation).unwrap() {
+                serde_json::Value::Object(map) if map.len() == 1 => (),
+                _ => panic!("TODO"),
             };
+        }
+    }
 
-            let json = serde_json::to_string(&input).unwrap();
-            let output: TaggedOperation = serde_json::from_str(&json).unwrap();
+    impl Arbitrary for TaggedOperation {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
 
-            assert_eq!(input, output);
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            let operation = any::<CollectionUpdateOperations>();
+            let tag = any::<Option<String>>();
+
+            (operation, tag)
+                .prop_map(|(operation, tag)| Self { operation, tag })
+                .boxed()
+        }
+    }
+
+    impl Arbitrary for CollectionUpdateOperations {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                any::<point_ops::PointOperations>().prop_map(Self::PointOperation),
+                any::<vector_ops::VectorOperations>().prop_map(Self::VectorOperation),
+                any::<payload_ops::PayloadOps>().prop_map(Self::PayloadOperation),
+                any::<FieldIndexOperations>().prop_map(Self::FieldIndexOperation),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for point_ops::PointOperations {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            let upsert = Self::UpsertPoints(PointInsertOperationsInternal::PointsList(Vec::new()));
+            let delete = Self::DeletePoints { ids: Vec::new() };
+
+            let delete_by_filter = Self::DeletePointsByFilter(Filter {
+                should: None,
+                must: None,
+                must_not: None,
+            });
+
+            let sync = Self::SyncPoints(PointSyncOperation {
+                from_id: None,
+                to_id: None,
+                points: Vec::new(),
+            });
+
+            prop_oneof![
+                Just(upsert),
+                Just(delete),
+                Just(delete_by_filter),
+                Just(sync),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for vector_ops::VectorOperations {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            let update = Self::UpdateVectors(UpdateVectorsOp { points: Vec::new() });
+
+            let delete = Self::DeleteVectors(
+                PointIdsList {
+                    points: Vec::new(),
+                    shard_key: None,
+                },
+                Vec::new(),
+            );
+
+            let delete_by_filter = Self::DeleteVectorsByFilter(
+                Filter {
+                    should: None,
+                    must: None,
+                    must_not: None,
+                },
+                Vec::new(),
+            );
+
+            prop_oneof![Just(update), Just(delete), Just(delete_by_filter),].boxed()
+        }
+    }
+
+    impl Arbitrary for payload_ops::PayloadOps {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            let set = Self::SetPayload(SetPayloadOp {
+                payload: Payload(Default::default()),
+                points: None,
+                filter: None,
+            });
+
+            let overwrite = Self::OverwritePayload(SetPayloadOp {
+                payload: Payload(Default::default()),
+                points: None,
+                filter: None,
+            });
+
+            let delete = Self::DeletePayload(DeletePayloadOp {
+                keys: Vec::new(),
+                points: None,
+                filter: None,
+            });
+
+            let clear = Self::ClearPayload { points: Vec::new() };
+
+            let clear_by_filter = Self::ClearPayloadByFilter(Filter {
+                should: None,
+                must: None,
+                must_not: None,
+            });
+
+            prop_oneof![
+                Just(set),
+                Just(overwrite),
+                Just(delete),
+                Just(clear),
+                Just(clear_by_filter),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for FieldIndexOperations {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            let create = Self::CreateIndex(CreateIndex {
+                field_name: String::new(),
+                field_schema: None,
+            });
+
+            let delete = Self::DeleteIndex(String::new());
+
+            prop_oneof![Just(create), Just(delete),].boxed()
         }
     }
 }

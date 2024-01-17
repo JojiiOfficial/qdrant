@@ -28,13 +28,11 @@ pub struct SetPayload {
 /// Unlike `SetPayload` it does not contain `shard_key` field
 /// as individual shard does not need to know about shard key
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Validate)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct SetPayloadOp {
     pub payload: Payload,
     /// Assigns payload to each point in this list
     pub points: Option<Vec<PointIdType>>,
     /// Assigns payload to each point that satisfy this filter condition
-    #[cfg_attr(test, proptest(value = "None"))]
     pub filter: Option<Filter>,
 }
 
@@ -94,14 +92,12 @@ pub struct DeletePayload {
 /// Unlike `DeletePayload` it does not contain `shard_key` field
 /// as individual shard does not need to know about shard key
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Validate)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 pub struct DeletePayloadOp {
     /// List of payload keys to remove from payload
     pub keys: Vec<PayloadKeyType>,
     /// Deletes values from each point in this list
     pub points: Option<Vec<PointIdType>>,
     /// Deletes values from points that satisfy this filter condition
-    #[cfg_attr(test, proptest(value = "None"))]
     pub filter: Option<Filter>,
 }
 
@@ -132,7 +128,6 @@ impl TryFrom<DeletePayloadShadow> for DeletePayload {
 
 /// Define operations description for point payloads manipulation
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[serde(rename_all = "snake_case")]
 pub enum PayloadOps {
     /// Set payload value, overrides if it is already exists
@@ -142,7 +137,6 @@ pub enum PayloadOps {
     /// Drops all Payload values associated with given points.
     ClearPayload { points: Vec<PointIdType> },
     /// Clear all Payload values by given filter criteria.
-    #[cfg_attr(test, proptest(skip))]
     ClearPayloadByFilter(Filter),
     /// Overwrite full payload with given keys
     OverwritePayload(SetPayloadOp),
