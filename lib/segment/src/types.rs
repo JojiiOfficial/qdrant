@@ -1056,7 +1056,7 @@ pub enum JsonPayload {
 }
 
 /// All possible names of payload types
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Copy, PartialEq, Hash, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum PayloadSchemaType {
     Keyword,
@@ -1068,14 +1068,14 @@ pub enum PayloadSchemaType {
 }
 
 /// Payload type with parameters
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Hash, Eq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PayloadSchemaParams {
     Text(TextIndexParams),
     Integer(IntegerIndexParams),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Hash, Eq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PayloadFieldSchema {
     FieldType(PayloadSchemaType),
@@ -1462,7 +1462,7 @@ impl GeoPolygon {
                 || (first.lon - last.lon).abs() > f64::EPSILON
             {
                 return Err(OperationError::ValidationError {
-                    description: String::from("polygon invalid, the first and the last points should be the same to form a closed line")
+                    description: String::from("polygon invalid, the first and the last points should be the same to form a closed line") 
                 });
             }
         }

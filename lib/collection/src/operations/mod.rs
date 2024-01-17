@@ -22,14 +22,14 @@ use validator::Validate;
 use crate::hash_ring::HashRing;
 use crate::shards::shard::ShardId;
 
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Validate)]
+#[derive(Debug, Deserialize, Serialize, Validate, Default, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct CreateIndex {
     pub field_name: String,
     pub field_schema: Option<PayloadFieldSchema>,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum FieldIndexOperations {
     /// Create index for payload field

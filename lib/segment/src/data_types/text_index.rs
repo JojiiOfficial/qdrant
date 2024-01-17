@@ -1,14 +1,14 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Default, Debug, Deserialize, Serialize, JsonSchema, Clone, Copy, PartialEq, Hash, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TextIndexType {
     #[default]
     Text,
 }
 
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Default, Debug, Deserialize, Serialize, JsonSchema, Clone, Copy, PartialEq, Hash, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TokenizerType {
     Prefix,
@@ -18,7 +18,7 @@ pub enum TokenizerType {
     Multilingual,
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, Hash, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Hash, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct TextIndexParams {
     // Required for OpenAPI schema without anonymous types, versus #[serde(tag = "type")]
