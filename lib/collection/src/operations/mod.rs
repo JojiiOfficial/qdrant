@@ -199,11 +199,10 @@ mod tests {
     use proptest::prelude::*;
     use segment::types::*;
 
-    use super::*;
-
     use super::payload_ops::*;
     use super::point_ops::*;
     use super::vector_ops::*;
+    use super::*;
 
     proptest::proptest! {
         #[test]
