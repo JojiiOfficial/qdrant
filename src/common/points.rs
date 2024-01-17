@@ -20,7 +20,9 @@ use collection::operations::types::{
 use collection::operations::vector_ops::{
     DeleteVectors, UpdateVectors, UpdateVectorsOp, VectorOperations,
 };
-use collection::operations::{CollectionUpdateOperations, CreateIndex, FieldIndexOperations};
+use collection::operations::{
+    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, TaggedOperation,
+};
 use collection::shards::shard::ShardId;
 use schemars::JsonSchema;
 use segment::types::{PayloadFieldSchema, PayloadKeyType, ScoredPoint};
@@ -157,6 +159,7 @@ pub async fn do_upsert_points(
     toc: &TableOfContent,
     collection_name: &str,
     operation: PointInsertOperations,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -169,7 +172,7 @@ pub async fn do_upsert_points(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -181,6 +184,7 @@ pub async fn do_delete_points(
     toc: &TableOfContent,
     collection_name: &str,
     points: PointsSelector,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -198,7 +202,7 @@ pub async fn do_delete_points(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -210,6 +214,7 @@ pub async fn do_update_vectors(
     toc: &TableOfContent,
     collection_name: &str,
     operation: UpdateVectors,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -224,7 +229,7 @@ pub async fn do_update_vectors(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -236,6 +241,7 @@ pub async fn do_delete_vectors(
     toc: &TableOfContent,
     collection_name: &str,
     operation: DeleteVectors,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -260,7 +266,7 @@ pub async fn do_delete_vectors(
         result = Some(
             toc.update(
                 collection_name,
-                collection_operation,
+                TaggedOperation::with_tag(collection_operation, tag.clone()),
                 wait,
                 ordering,
                 shard_selector.clone(),
@@ -275,7 +281,7 @@ pub async fn do_delete_vectors(
         result = Some(
             toc.update(
                 collection_name,
-                collection_operation,
+                TaggedOperation::with_tag(collection_operation, tag),
                 wait,
                 ordering,
                 shard_selector,
@@ -291,6 +297,7 @@ pub async fn do_set_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: SetPayload,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -313,7 +320,7 @@ pub async fn do_set_payload(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -325,6 +332,7 @@ pub async fn do_overwrite_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: SetPayload,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -347,7 +355,7 @@ pub async fn do_overwrite_payload(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -359,6 +367,7 @@ pub async fn do_delete_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: DeletePayload,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -381,7 +390,7 @@ pub async fn do_delete_payload(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -393,6 +402,7 @@ pub async fn do_clear_payload(
     toc: &TableOfContent,
     collection_name: &str,
     points: PointsSelector,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -412,7 +422,7 @@ pub async fn do_clear_payload(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -424,6 +434,7 @@ pub async fn do_batch_update_points(
     toc: &TableOfContent,
     collection_name: &str,
     operations: Vec<UpdateOperation>,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -436,6 +447,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.upsert,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -447,6 +459,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.delete,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -458,6 +471,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.set_payload,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -469,6 +483,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.overwrite_payload,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -480,6 +495,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.delete_payload,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -491,6 +507,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.clear_payload,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -502,6 +519,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.update_vectors,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -513,6 +531,7 @@ pub async fn do_batch_update_points(
                     toc,
                     collection_name,
                     operation.delete_vectors,
+                    tag.clone(),
                     shard_selection,
                     wait,
                     ordering,
@@ -530,6 +549,7 @@ pub async fn do_create_index_internal(
     collection_name: &str,
     field_name: PayloadKeyType,
     field_schema: Option<PayloadFieldSchema>,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -549,7 +569,7 @@ pub async fn do_create_index_internal(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -561,6 +581,7 @@ pub async fn do_create_index(
     dispatcher: &Dispatcher,
     collection_name: &str,
     operation: CreateFieldIndex,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -593,6 +614,7 @@ pub async fn do_create_index(
         collection_name,
         operation.field_name,
         Some(field_schema),
+        tag,
         shard_selection,
         wait,
         ordering,
@@ -604,6 +626,7 @@ pub async fn do_delete_index_internal(
     toc: &TableOfContent,
     collection_name: &str,
     index_name: String,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -620,7 +643,7 @@ pub async fn do_delete_index_internal(
 
     toc.update(
         collection_name,
-        collection_operation,
+        TaggedOperation::with_tag(collection_operation, tag),
         wait,
         ordering,
         shard_selector,
@@ -632,6 +655,7 @@ pub async fn do_delete_index(
     dispatcher: &Dispatcher,
     collection_name: &str,
     index_name: String,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -652,6 +676,7 @@ pub async fn do_delete_index(
         dispatcher.toc(),
         collection_name,
         index_name,
+        tag,
         shard_selection,
         wait,
         ordering,

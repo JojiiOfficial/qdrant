@@ -48,6 +48,7 @@ async fn upsert_points(
         &collection.name,
         operation,
         None,
+        None,
         wait,
         ordering,
     )
@@ -71,6 +72,7 @@ async fn delete_points(
         toc.get_ref(),
         &collection.name,
         operation,
+        None,
         None,
         wait,
         ordering,
@@ -96,6 +98,7 @@ async fn update_vectors(
         &collection.name,
         operation,
         None,
+        None,
         wait,
         ordering,
     )
@@ -119,6 +122,7 @@ async fn delete_vectors(
         toc.get_ref(),
         &collection.name,
         operation,
+        None,
         None,
         wait,
         ordering,
@@ -144,6 +148,7 @@ async fn set_payload(
         &collection.name,
         operation,
         None,
+        None,
         wait,
         ordering,
     )
@@ -167,6 +172,7 @@ async fn overwrite_payload(
         toc.get_ref(),
         &collection.name,
         operation,
+        None,
         None,
         wait,
         ordering,
@@ -192,6 +198,7 @@ async fn delete_payload(
         &collection.name,
         operation,
         None,
+        None,
         wait,
         ordering,
     )
@@ -215,6 +222,7 @@ async fn clear_payload(
         toc.get_ref(),
         &collection.name,
         operation,
+        None,
         None,
         wait,
         ordering,
@@ -240,6 +248,7 @@ async fn update_batch(
         &collection.name,
         operations.operations,
         None,
+        None,
         wait,
         ordering,
     )
@@ -263,6 +272,7 @@ async fn create_field_index(
         &collection.name,
         operation,
         None,
+        None,
         wait,
         ordering,
     )
@@ -285,6 +295,7 @@ async fn delete_field_index(
         dispatcher.get_ref(),
         &collection.name,
         field.name.clone(),
+        None,
         None,
         wait,
         ordering,

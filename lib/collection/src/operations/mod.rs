@@ -54,6 +54,19 @@ impl TaggedOperation {
             tag: None,
         }
     }
+
+    pub fn with_tag(operation: impl Into<CollectionUpdateOperations>, tag: Option<String>) -> Self {
+        Self {
+            operation: operation.into(),
+            tag,
+        }
+    }
+}
+
+impl From<CollectionUpdateOperations> for TaggedOperation {
+    fn from(operation: CollectionUpdateOperations) -> Self {
+        Self::new(operation)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

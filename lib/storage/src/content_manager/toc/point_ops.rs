@@ -7,7 +7,7 @@ use collection::operations::consistency_params::ReadConsistency;
 use collection::operations::point_ops::WriteOrdering;
 use collection::operations::shard_selector_internal::ShardSelectorInternal;
 use collection::operations::types::*;
-use collection::operations::CollectionUpdateOperations;
+use collection::operations::TaggedOperation;
 use collection::{discovery, recommendations};
 use futures::future::try_join_all;
 use segment::types::{ScoredPoint, ShardKey};
@@ -249,7 +249,7 @@ impl TableOfContent {
     async fn _update_shard_keys(
         collection: &Collection,
         shard_keys: Vec<ShardKey>,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
         ordering: WriteOrdering,
     ) -> Result<UpdateResult, StorageError> {
@@ -272,7 +272,7 @@ impl TableOfContent {
     pub async fn update(
         &self,
         collection_name: &str,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
         ordering: WriteOrdering,
         shard_selector: ShardSelectorInternal,
@@ -314,7 +314,7 @@ impl TableOfContent {
                 }
             }
         };
-        if operation.is_write_operation() {
+        if operation.operation.is_write_operation() {
             self.check_write_lock()?;
         }
         let res = match shard_selector {

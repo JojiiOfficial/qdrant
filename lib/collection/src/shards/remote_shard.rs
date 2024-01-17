@@ -44,7 +44,7 @@ use crate::operations::types::{
     UpdateResult,
 };
 use crate::operations::vector_ops::VectorOperations;
-use crate::operations::{CollectionUpdateOperations, FieldIndexOperations};
+use crate::operations::{CollectionUpdateOperations, FieldIndexOperations, TaggedOperation};
 use crate::shards::channel_service::ChannelService;
 use crate::shards::conversions::{
     internal_clear_payload, internal_clear_payload_by_filter, internal_create_index,
@@ -203,7 +203,7 @@ impl RemoteShard {
 
     pub async fn forward_update(
         &self,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
@@ -221,14 +221,14 @@ impl RemoteShard {
         &self,
         shard_id: Option<ShardId>,
         collection_name: String,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
         ordering: Option<WriteOrdering>,
     ) -> CollectionResult<UpdateResult> {
         let mut timer = ScopeDurationMeasurer::new(&self.telemetry_update_durations);
         timer.set_success(false);
 
-        let point_operation_response = match operation {
+        let point_operation_response = match operation.operation {
             CollectionUpdateOperations::PointOperation(point_ops) => match point_ops {
                 PointOperations::UpsertPoints(point_insert_operations) => {
                     let request = &internal_upsert_points(
@@ -541,7 +541,7 @@ pub struct CollectionCoreSearchRequest<'a>(pub(crate) (CollectionId, &'a CoreSea
 impl ShardOperation for RemoteShard {
     async fn update(
         &self,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         // targets the shard explicitly

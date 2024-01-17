@@ -18,7 +18,7 @@ use crate::operations::types::{
     CollectionInfo, CollectionResult, CoreSearchRequestBatch, CountRequestInternal, CountResult,
     PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::CollectionUpdateOperations;
+use crate::operations::TaggedOperation;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
 use crate::shards::telemetry::LocalShardTelemetry;
@@ -154,7 +154,7 @@ impl ShardOperation for QueueProxyShard {
     /// Update `wrapped_shard` while keeping track of operations
     async fn update(
         &self,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         self.inner
@@ -324,11 +324,7 @@ impl Inner {
         let (pending_count, batch) = {
             let wal = self.wrapped_shard.wal.lock();
             let items_left = wal.last_index().saturating_sub(start_index - 1);
-            let batch = wal
-                .read(start_index)
-                .take(BATCH_SIZE)
-                .map(|(id, op)| (id, op.operation))
-                .collect::<Vec<_>>();
+            let batch = wal.read(start_index).take(BATCH_SIZE).collect::<Vec<_>>();
             (items_left, batch)
         };
 
@@ -387,7 +383,7 @@ impl ShardOperation for Inner {
     /// Update `wrapped_shard` while keeping track of operations
     async fn update(
         &self,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let _update_lock = self.update_lock.lock().await;
@@ -467,7 +463,7 @@ impl ShardOperation for Inner {
 ///
 /// If cancelled - none, some or all operations of the batch may be transmitted to the remote.
 async fn transfer_operations_batch(
-    batch: &[(u64, CollectionUpdateOperations)],
+    batch: &[(u64, TaggedOperation)],
     remote_shard: &RemoteShard,
 ) -> CollectionResult<()> {
     // TODO: naive transfer approach, transfer batch of points instead

@@ -17,7 +17,7 @@ use crate::operations::types::{
     CountRequestInternal, CountResult, PointRequestInternal, QueryEnum, Record, UpdateResult,
     UpdateStatus,
 };
-use crate::operations::{CollectionUpdateOperations, TaggedOperation};
+use crate::operations::TaggedOperation;
 use crate::optimizers_builder::DEFAULT_INDEXING_THRESHOLD_KB;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
@@ -101,6 +101,7 @@ impl LocalShard {
         Ok(top_results)
     }
 }
+
 #[async_trait]
 impl ShardOperation for LocalShard {
     /// Imply interior mutability.
@@ -108,7 +109,7 @@ impl ShardOperation for LocalShard {
     /// Explicitly waits for result to be updated.
     async fn update(
         &self,
-        operation: CollectionUpdateOperations,
+        operation: TaggedOperation,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let (callback_sender, callback_receiver) = if wait {
@@ -122,7 +123,6 @@ impl ShardOperation for LocalShard {
             let update_sender = self.update_sender.load();
             let channel_permit = update_sender.reserve().await?;
             let mut wal_lock = self.wal.lock();
-            let operation = TaggedOperation::new(operation);
             let operation_id = wal_lock.write(&operation)?;
             channel_permit.send(UpdateSignal::Operation(OperationData {
                 op_num: operation_id,

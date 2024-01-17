@@ -55,7 +55,9 @@ impl Collection {
         // as indexation may take a long time
         let wait = false;
 
-        let result = self.update_all_local(create_index_operation, wait).await?;
+        let result = self
+            .update_all_local(create_index_operation.into(), wait)
+            .await?;
 
         Ok(result)
     }
@@ -72,7 +74,9 @@ impl Collection {
             FieldIndexOperations::DeleteIndex(field_name),
         );
 
-        let result = self.update_all_local(delete_index_operation, false).await?;
+        let result = self
+            .update_all_local(delete_index_operation.into(), false)
+            .await?;
 
         Ok(result)
     }
