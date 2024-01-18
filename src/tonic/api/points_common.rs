@@ -29,7 +29,7 @@ use collection::operations::types::{
     QueryEnum, RecommendExample, ScrollRequestInternal,
 };
 use collection::operations::vector_ops::{DeleteVectors, PointVectors, UpdateVectors};
-use collection::operations::CollectionUpdateOperations;
+use collection::operations::{CollectionUpdateOperations, TaggedOperation};
 use collection::shards::shard::ShardId;
 use segment::types::{
     ExtendedPointId, Filter, PayloadFieldSchema, PayloadSchemaParams, PayloadSchemaType,
@@ -130,6 +130,7 @@ pub async fn upsert(
 pub async fn sync(
     toc: &TableOfContent,
     sync_points: SyncPoints,
+    tag: Option<String>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let SyncPoints {
@@ -166,7 +167,7 @@ pub async fn sync(
     let result = toc
         .update(
             &collection_name,
-            collection_operation.into(),
+            TaggedOperation::with_tag(collection_operation, tag),
             wait.unwrap_or(false),
             write_ordering_from_proto(ordering)?,
             shard_selector,
