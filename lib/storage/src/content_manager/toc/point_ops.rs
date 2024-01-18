@@ -7,7 +7,7 @@ use collection::operations::consistency_params::ReadConsistency;
 use collection::operations::point_ops::WriteOrdering;
 use collection::operations::shard_selector_internal::ShardSelectorInternal;
 use collection::operations::types::*;
-use collection::operations::TaggedOperation;
+use collection::operations::{CollectionUpdateOperations, TaggedOperation};
 use collection::{discovery, recommendations};
 use futures::future::try_join_all;
 use segment::types::{ScoredPoint, ShardKey};
@@ -249,7 +249,7 @@ impl TableOfContent {
     async fn _update_shard_keys(
         collection: &Collection,
         shard_keys: Vec<ShardKey>,
-        operation: TaggedOperation,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> Result<UpdateResult, StorageError> {
@@ -272,7 +272,7 @@ impl TableOfContent {
     pub async fn update(
         &self,
         collection_name: &str,
-        operation: TaggedOperation,
+        tagged: TaggedOperation,
         wait: bool,
         ordering: WriteOrdering,
         shard_selector: ShardSelectorInternal,
@@ -314,37 +314,47 @@ impl TableOfContent {
                 }
             }
         };
-        if operation.operation.is_write_operation() {
+        if tagged.operation.is_write_operation() {
             self.check_write_lock()?;
         }
+
+        // TODO: `debug_assert(tagged.tag.is_none())` for `_update_shard_keys`/`update_from_client`!
+
         let res = match shard_selector {
             ShardSelectorInternal::Empty => {
                 collection
-                    .update_from_client(operation, wait, ordering, None)
+                    .update_from_client(tagged.operation, wait, ordering, None)
                     .await?
             }
             ShardSelectorInternal::All => {
                 let shard_keys = collection.get_shard_keys().await;
                 if shard_keys.is_empty() {
                     collection
-                        .update_from_client(operation, wait, ordering, None)
+                        .update_from_client(tagged.operation, wait, ordering, None)
                         .await?
                 } else {
-                    Self::_update_shard_keys(&collection, shard_keys, operation, wait, ordering)
-                        .await?
+                    Self::_update_shard_keys(
+                        &collection,
+                        shard_keys,
+                        tagged.operation,
+                        wait,
+                        ordering,
+                    )
+                    .await?
                 }
             }
             ShardSelectorInternal::ShardKey(shard_key) => {
                 collection
-                    .update_from_client(operation, wait, ordering, Some(shard_key))
+                    .update_from_client(tagged.operation, wait, ordering, Some(shard_key))
                     .await?
             }
             ShardSelectorInternal::ShardKeys(shard_keys) => {
-                Self::_update_shard_keys(&collection, shard_keys, operation, wait, ordering).await?
+                Self::_update_shard_keys(&collection, shard_keys, tagged.operation, wait, ordering)
+                    .await?
             }
             ShardSelectorInternal::ShardId(shard_selection) => {
                 collection
-                    .update_from_peer(operation, shard_selection, wait, ordering)
+                    .update_from_peer(tagged, shard_selection, wait, ordering)
                     .await?
             }
         };

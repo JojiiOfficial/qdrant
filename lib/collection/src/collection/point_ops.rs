@@ -10,7 +10,7 @@ use crate::operations::consistency_params::ReadConsistency;
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::shard_selector_internal::ShardSelectorInternal;
 use crate::operations::types::*;
-use crate::operations::TaggedOperation;
+use crate::operations::{CollectionUpdateOperations, TaggedOperation};
 use crate::shards::shard::ShardId;
 
 impl Collection {
@@ -72,28 +72,27 @@ impl Collection {
 
     pub async fn update_from_client_simple(
         &self,
-        operation: impl Into<TaggedOperation>,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
-        self.update_from_client(operation.into(), wait, ordering, None)
+        self.update_from_client(operation, wait, ordering, None)
             .await
     }
 
     pub async fn update_from_client(
         &self,
-        tagged: TaggedOperation,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
         shard_keys_selection: Option<ShardKey>,
     ) -> CollectionResult<UpdateResult> {
-        tagged.operation.validate()?;
+        operation.validate()?;
         let _update_lock = self.updates_lock.read().await;
 
         let mut results = {
             let shards_holder = self.shards_holder.read().await;
-            let shard_to_op =
-                shards_holder.split_by_shard(tagged.operation, &shard_keys_selection)?;
+            let shard_to_op = shards_holder.split_by_shard(operation, &shard_keys_selection)?;
 
             if shard_to_op.is_empty() {
                 return Err(CollectionError::bad_request(
@@ -105,7 +104,7 @@ impl Collection {
                 .into_iter()
                 .map(move |(replica_set, operation)| {
                     replica_set.update_with_consistency(
-                        TaggedOperation::with_tag(operation, tagged.tag.clone()),
+                        operation.into(), // TODO: Assign tag!
                         wait,
                         ordering,
                     )
