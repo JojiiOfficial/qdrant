@@ -5,7 +5,7 @@ use futures::stream::FuturesUnordered;
 use futures::{FutureExt as _, StreamExt as _};
 use itertools::Itertools as _;
 
-use super::{ReplicaSetState, ReplicaState, ShardReplicaSet};
+use super::{vector_clock, ReplicaSetState, ReplicaState, ShardReplicaSet};
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::types::{CollectionError, CollectionResult, UpdateResult};
 use crate::operations::OperationWithTimestamp;
@@ -34,6 +34,10 @@ impl ShardReplicaSet {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn lock_vector_clock(&self) -> vector_clock::ClockGuard {
+        self.vector_clock.lock().await.occupy()
     }
 
     pub async fn update_with_consistency(

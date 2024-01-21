@@ -10,7 +10,7 @@ use crate::operations::consistency_params::ReadConsistency;
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::shard_selector_internal::ShardSelectorInternal;
 use crate::operations::types::*;
-use crate::operations::{CollectionUpdateOperations, OperationWithTimestamp};
+use crate::operations::{CollectionUpdateOperations, OperationTimestamp, OperationWithTimestamp};
 use crate::shards::shard::ShardId;
 
 impl Collection {
@@ -100,15 +100,27 @@ impl Collection {
                 ));
             }
 
-            let shard_requests = shard_to_op
-                .into_iter()
-                .map(move |(replica_set, operation)| {
-                    replica_set.update_with_consistency(
-                        OperationWithTimestamp::from(operation), // TODO: Assign `timestamp`!
-                        wait,
-                        ordering,
-                    )
-                });
+            let shard_requests =
+                shard_to_op
+                    .into_iter()
+                    .map(move |(replica_set, operation)| async move {
+                        let clock = replica_set.lock_vector_clock().await;
+
+                        let timestamp = OperationTimestamp::new(
+                            self.this_peer_id,
+                            clock.id() as _,
+                            clock.timestamp(),
+                        );
+
+                        replica_set
+                            .update_with_consistency(
+                                OperationWithTimestamp::new(operation, Some(timestamp)),
+                                wait,
+                                ordering,
+                            )
+                            .await
+                    });
+
             future::join_all(shard_requests).await
         };
 
