@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::hash_ring::HashRing;
-use crate::shards::shard::ShardId;
+use crate::shards::shard::{PeerId, ShardId};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Validate)]
 #[serde(rename_all = "snake_case")]
@@ -39,33 +39,62 @@ pub enum FieldIndexOperations {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct TaggedOperation {
+pub struct WithMeta {
     #[serde(flatten)]
     pub operation: CollectionUpdateOperations,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tag: Option<String>,
+    pub metadata: Option<OperationMeta>,
 }
 
-impl TaggedOperation {
-    pub fn new(operation: impl Into<CollectionUpdateOperations>) -> Self {
+impl WithMeta {
+    pub fn new(
+        operation: impl Into<CollectionUpdateOperations>,
+        metadata: Option<OperationMeta>,
+    ) -> Self {
         Self {
             operation: operation.into(),
-            tag: None,
-        }
-    }
-
-    pub fn with_tag(operation: impl Into<CollectionUpdateOperations>, tag: Option<String>) -> Self {
-        Self {
-            operation: operation.into(),
-            tag,
+            metadata,
         }
     }
 }
 
-impl From<CollectionUpdateOperations> for TaggedOperation {
+impl From<CollectionUpdateOperations> for WithMeta {
     fn from(operation: CollectionUpdateOperations) -> Self {
-        Self::new(operation)
+        Self::new(operation, None)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct OperationMeta {
+    peer_id: PeerId,
+    sub_id: u32,
+    operation_id: u64,
+}
+
+impl OperationMeta {
+    pub fn new(peer_id: PeerId, sub_id: u32, operation_id: u64) -> Self {
+        Self {
+            peer_id,
+            sub_id,
+            operation_id,
+        }
+    }
+}
+
+impl From<api::grpc::qdrant::OperationMeta> for OperationMeta {
+    fn from(meta: api::grpc::qdrant::OperationMeta) -> Self {
+        Self::new(meta.peer_id, meta.sub_id, meta.operation_id)
+    }
+}
+
+impl From<OperationMeta> for api::grpc::qdrant::OperationMeta {
+    fn from(meta: OperationMeta) -> Self {
+        Self {
+            peer_id: meta.peer_id,
+            sub_id: meta.sub_id,
+            operation_id: meta.operation_id,
+        }
     }
 }
 
@@ -219,15 +248,15 @@ mod tests {
 
     proptest::proptest! {
         #[test]
-        fn tagged_operation_serde(tagged in any::<TaggedOperation>()) {
+        fn tagged_operation_serde(tagged in any::<WithMeta>()) {
             // Assert that `TaggedOperation` can be serialized
             let input = serde_json::to_string(&tagged).unwrap();
-            let output: TaggedOperation = serde_json::from_str(&input).unwrap();
+            let output: WithMeta = serde_json::from_str(&input).unwrap();
             assert_eq!(tagged, output);
 
             // Assert that `TaggedOperation` can be deserialized from `CollectionUpdateOperation`
             let input = serde_json::to_string(&tagged.operation).unwrap();
-            let output: TaggedOperation = serde_json::from_str(&input).unwrap();
+            let output: WithMeta = serde_json::from_str(&input).unwrap();
             assert_eq!(tagged.operation, output.operation);
 
             // Assert that `CollectionUpdateOperation` serializes into JSON object with a single key
@@ -239,16 +268,26 @@ mod tests {
         }
     }
 
-    impl Arbitrary for TaggedOperation {
+    impl Arbitrary for WithMeta {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            let operation = any::<CollectionUpdateOperations>();
-            let tag = any::<Option<String>>();
+            any::<(CollectionUpdateOperations, Option<OperationMeta>)>()
+                .prop_map(|(operation, metadata)| Self::new(operation, metadata))
+                .boxed()
+        }
+    }
 
-            (operation, tag)
-                .prop_map(|(operation, tag)| Self { operation, tag })
+    impl Arbitrary for OperationMeta {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            any::<(PeerId, u32, u64)>()
+                .prop_map(|(peer_id, sub_id, operation_id)| {
+                    Self::new(peer_id, sub_id, operation_id)
+                })
                 .boxed()
         }
     }

@@ -19,12 +19,12 @@ use crate::operations::point_ops::{
 };
 use crate::operations::types::CollectionResult;
 use crate::operations::vector_ops::UpdateVectorsOp;
-use crate::operations::CreateIndex;
+use crate::operations::{CreateIndex, OperationMeta};
 use crate::shards::shard::ShardId;
 
 pub fn internal_sync_points(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     points_sync_operation: PointSyncOperation,
     wait: bool,
@@ -32,7 +32,7 @@ pub fn internal_sync_points(
 ) -> CollectionResult<SyncPointsInternal> {
     Ok(SyncPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         sync_points: Some(SyncPoints {
             collection_name,
             wait: Some(wait),
@@ -50,7 +50,7 @@ pub fn internal_sync_points(
 
 pub fn internal_upsert_points(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     point_insert_operations: PointInsertOperationsInternal,
     wait: bool,
@@ -58,7 +58,7 @@ pub fn internal_upsert_points(
 ) -> CollectionResult<UpsertPointsInternal> {
     Ok(UpsertPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         upsert_points: Some(UpsertPoints {
             collection_name,
             wait: Some(wait),
@@ -77,7 +77,7 @@ pub fn internal_upsert_points(
 
 pub fn internal_delete_points(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     ids: Vec<PointIdType>,
     wait: bool,
@@ -85,7 +85,7 @@ pub fn internal_delete_points(
 ) -> DeletePointsInternal {
     DeletePointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_points: Some(DeletePoints {
             collection_name,
             wait: Some(wait),
@@ -102,7 +102,7 @@ pub fn internal_delete_points(
 
 pub fn internal_delete_points_by_filter(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     filter: Filter,
     wait: bool,
@@ -110,7 +110,7 @@ pub fn internal_delete_points_by_filter(
 ) -> DeletePointsInternal {
     DeletePointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_points: Some(DeletePoints {
             collection_name,
             wait: Some(wait),
@@ -125,7 +125,7 @@ pub fn internal_delete_points_by_filter(
 
 pub fn internal_update_vectors(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     update_vectors: UpdateVectorsOp,
     wait: bool,
@@ -133,7 +133,7 @@ pub fn internal_update_vectors(
 ) -> UpdateVectorsInternal {
     UpdateVectorsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         update_vectors: Some(UpdatePointVectors {
             collection_name,
             wait: Some(wait),
@@ -153,7 +153,7 @@ pub fn internal_update_vectors(
 
 pub fn internal_delete_vectors(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     ids: Vec<PointIdType>,
     vector_names: Vec<String>,
@@ -162,7 +162,7 @@ pub fn internal_delete_vectors(
 ) -> DeleteVectorsInternal {
     DeleteVectorsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_vectors: Some(DeletePointVectors {
             collection_name,
             wait: Some(wait),
@@ -182,7 +182,7 @@ pub fn internal_delete_vectors(
 
 pub fn internal_delete_vectors_by_filter(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     filter: Filter,
     vector_names: Vec<String>,
@@ -191,7 +191,7 @@ pub fn internal_delete_vectors_by_filter(
 ) -> DeleteVectorsInternal {
     DeleteVectorsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_vectors: Some(DeletePointVectors {
             collection_name,
             wait: Some(wait),
@@ -209,7 +209,7 @@ pub fn internal_delete_vectors_by_filter(
 
 pub fn internal_set_payload(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     set_payload: SetPayloadOp,
     wait: bool,
@@ -229,7 +229,7 @@ pub fn internal_set_payload(
 
     SetPayloadPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         set_payload_points: Some(SetPayloadPoints {
             collection_name,
             wait: Some(wait),
@@ -243,7 +243,7 @@ pub fn internal_set_payload(
 
 pub fn internal_delete_payload(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     delete_payload: DeletePayloadOp,
     wait: bool,
@@ -263,7 +263,7 @@ pub fn internal_delete_payload(
 
     DeletePayloadPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_payload_points: Some(DeletePayloadPoints {
             collection_name,
             wait: Some(wait),
@@ -277,7 +277,7 @@ pub fn internal_delete_payload(
 
 pub fn internal_clear_payload(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     points: Vec<PointIdType>,
     wait: bool,
@@ -285,7 +285,7 @@ pub fn internal_clear_payload(
 ) -> ClearPayloadPointsInternal {
     ClearPayloadPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         clear_payload_points: Some(ClearPayloadPoints {
             collection_name,
             wait: Some(wait),
@@ -302,7 +302,7 @@ pub fn internal_clear_payload(
 
 pub fn internal_clear_payload_by_filter(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     filter: Filter,
     wait: bool,
@@ -310,7 +310,7 @@ pub fn internal_clear_payload_by_filter(
 ) -> ClearPayloadPointsInternal {
     ClearPayloadPointsInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         clear_payload_points: Some(ClearPayloadPoints {
             collection_name,
             wait: Some(wait),
@@ -325,7 +325,7 @@ pub fn internal_clear_payload_by_filter(
 
 pub fn internal_create_index(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     create_index: CreateIndex,
     wait: bool,
@@ -373,7 +373,7 @@ pub fn internal_create_index(
 
     CreateFieldIndexCollectionInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         create_field_index_collection: Some(CreateFieldIndexCollection {
             collection_name,
             wait: Some(wait),
@@ -387,7 +387,7 @@ pub fn internal_create_index(
 
 pub fn internal_delete_index(
     shard_id: Option<ShardId>,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     collection_name: String,
     delete_index: String,
     wait: bool,
@@ -395,7 +395,7 @@ pub fn internal_delete_index(
 ) -> DeleteFieldIndexCollectionInternal {
     DeleteFieldIndexCollectionInternal {
         shard_id,
-        tag,
+        metadata: metadata.map(Into::into),
         delete_field_index_collection: Some(DeleteFieldIndexCollection {
             collection_name,
             wait: Some(wait),

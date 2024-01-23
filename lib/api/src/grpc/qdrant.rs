@@ -7049,8 +7049,8 @@ pub struct SyncPointsInternal {
     pub sync_points: ::core::option::Option<SyncPoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7062,8 +7062,8 @@ pub struct UpsertPointsInternal {
     pub upsert_points: ::core::option::Option<UpsertPoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7075,8 +7075,8 @@ pub struct DeletePointsInternal {
     pub delete_points: ::core::option::Option<DeletePoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7088,8 +7088,8 @@ pub struct UpdateVectorsInternal {
     pub update_vectors: ::core::option::Option<UpdatePointVectors>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7101,8 +7101,8 @@ pub struct DeleteVectorsInternal {
     pub delete_vectors: ::core::option::Option<DeletePointVectors>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7114,8 +7114,8 @@ pub struct SetPayloadPointsInternal {
     pub set_payload_points: ::core::option::Option<SetPayloadPoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7127,8 +7127,8 @@ pub struct DeletePayloadPointsInternal {
     pub delete_payload_points: ::core::option::Option<DeletePayloadPoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7140,8 +7140,8 @@ pub struct ClearPayloadPointsInternal {
     pub clear_payload_points: ::core::option::Option<ClearPayloadPoints>,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7155,8 +7155,8 @@ pub struct CreateFieldIndexCollectionInternal {
     >,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7170,8 +7170,19 @@ pub struct DeleteFieldIndexCollectionInternal {
     >,
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
-    pub tag: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "3")]
+    pub metadata: ::core::option::Option<OperationMeta>,
+}
+#[derive(serde::Serialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OperationMeta {
+    #[prost(uint64, tag = "1")]
+    pub peer_id: u64,
+    #[prost(uint32, tag = "2")]
+    pub sub_id: u32,
+    #[prost(uint64, tag = "3")]
+    pub operation_id: u64,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]

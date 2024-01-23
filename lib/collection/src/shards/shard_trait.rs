@@ -6,15 +6,11 @@ use segment::types::*;
 use tokio::runtime::Handle;
 
 use crate::operations::types::*;
-use crate::operations::TaggedOperation;
+use crate::operations::WithMeta;
 
 #[async_trait]
 pub trait ShardOperation {
-    async fn update(
-        &self,
-        operation: TaggedOperation,
-        wait: bool,
-    ) -> CollectionResult<UpdateResult>;
+    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult>;
 
     #[allow(clippy::too_many_arguments)]
     async fn scroll_by(

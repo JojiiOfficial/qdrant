@@ -29,7 +29,7 @@ use collection::operations::types::{
     QueryEnum, RecommendExample, ScrollRequestInternal,
 };
 use collection::operations::vector_ops::{DeleteVectors, PointVectors, UpdateVectors};
-use collection::operations::{CollectionUpdateOperations, TaggedOperation};
+use collection::operations::{CollectionUpdateOperations, OperationMeta, WithMeta};
 use collection::shards::shard::ShardId;
 use segment::types::{
     ExtendedPointId, Filter, PayloadFieldSchema, PayloadSchemaParams, PayloadSchemaType,
@@ -92,7 +92,7 @@ pub(crate) fn convert_shard_selector_for_read(
 pub async fn upsert(
     toc: &TableOfContent,
     upsert_points: UpsertPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let UpsertPoints {
@@ -115,7 +115,7 @@ pub async fn upsert(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -130,7 +130,7 @@ pub async fn upsert(
 pub async fn sync(
     toc: &TableOfContent,
     sync_points: SyncPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let SyncPoints {
@@ -167,7 +167,7 @@ pub async fn sync(
     let result = toc
         .update(
             &collection_name,
-            TaggedOperation::with_tag(collection_operation, tag),
+            WithMeta::new(collection_operation, metadata),
             wait.unwrap_or(false),
             write_ordering_from_proto(ordering)?,
             shard_selector,
@@ -182,7 +182,7 @@ pub async fn sync(
 pub async fn delete(
     toc: &TableOfContent,
     delete_points: DeletePoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let DeletePoints {
@@ -203,7 +203,7 @@ pub async fn delete(
         toc,
         &collection_name,
         points_selector,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -218,7 +218,7 @@ pub async fn delete(
 pub async fn update_vectors(
     toc: &TableOfContent,
     update_point_vectors: UpdatePointVectors,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let UpdatePointVectors {
@@ -253,7 +253,7 @@ pub async fn update_vectors(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -268,7 +268,7 @@ pub async fn update_vectors(
 pub async fn delete_vectors(
     toc: &TableOfContent,
     delete_point_vectors: DeletePointVectors,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let DeletePointVectors {
@@ -298,7 +298,7 @@ pub async fn delete_vectors(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -313,7 +313,7 @@ pub async fn delete_vectors(
 pub async fn set_payload(
     toc: &TableOfContent,
     set_payload_points: SetPayloadPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let SetPayloadPoints {
@@ -338,7 +338,7 @@ pub async fn set_payload(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -353,7 +353,7 @@ pub async fn set_payload(
 pub async fn overwrite_payload(
     toc: &TableOfContent,
     set_payload_points: SetPayloadPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let SetPayloadPoints {
@@ -378,7 +378,7 @@ pub async fn overwrite_payload(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -393,7 +393,7 @@ pub async fn overwrite_payload(
 pub async fn delete_payload(
     toc: &TableOfContent,
     delete_payload_points: DeletePayloadPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let DeletePayloadPoints {
@@ -418,7 +418,7 @@ pub async fn delete_payload(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -433,7 +433,7 @@ pub async fn delete_payload(
 pub async fn clear_payload(
     toc: &TableOfContent,
     clear_payload_points: ClearPayloadPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let ClearPayloadPoints {
@@ -454,7 +454,7 @@ pub async fn clear_payload(
         toc,
         &collection_name,
         points_selector,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -469,7 +469,7 @@ pub async fn clear_payload(
 pub async fn update_batch(
     toc: &TableOfContent,
     update_batch_points: UpdateBatchPoints,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<UpdateBatchResponse>, Status> {
     let UpdateBatchPoints {
@@ -501,7 +501,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -516,7 +516,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector: None,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -538,7 +538,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -560,7 +560,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -582,7 +582,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -600,7 +600,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -620,7 +620,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -642,7 +642,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -657,7 +657,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector: None,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -675,7 +675,7 @@ pub async fn update_batch(
                         ordering,
                         shard_key_selector,
                     },
-                    tag.clone(),
+                    metadata,
                     shard_selection,
                 )
                 .await
@@ -749,7 +749,7 @@ fn convert_field_type(
 pub async fn create_field_index(
     toc: &Dispatcher,
     create_field_index_collection: CreateFieldIndexCollection,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let CreateFieldIndexCollection {
@@ -773,7 +773,7 @@ pub async fn create_field_index(
         toc,
         &collection_name,
         operation,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -788,7 +788,7 @@ pub async fn create_field_index(
 pub async fn create_field_index_internal(
     toc: &TableOfContent,
     create_field_index_collection: CreateFieldIndexCollection,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let CreateFieldIndexCollection {
@@ -808,7 +808,7 @@ pub async fn create_field_index_internal(
         &collection_name,
         field_name,
         field_schema,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -823,7 +823,7 @@ pub async fn create_field_index_internal(
 pub async fn delete_field_index(
     toc: &Dispatcher,
     delete_field_index_collection: DeleteFieldIndexCollection,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let DeleteFieldIndexCollection {
@@ -838,7 +838,7 @@ pub async fn delete_field_index(
         toc,
         &collection_name,
         field_name,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,
@@ -853,7 +853,7 @@ pub async fn delete_field_index(
 pub async fn delete_field_index_internal(
     toc: &TableOfContent,
     delete_field_index_collection: DeleteFieldIndexCollection,
-    tag: Option<String>,
+    metadata: Option<OperationMeta>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponse>, Status> {
     let DeleteFieldIndexCollection {
@@ -868,7 +868,7 @@ pub async fn delete_field_index_internal(
         toc,
         &collection_name,
         field_name,
-        tag,
+        metadata,
         shard_selection,
         wait.unwrap_or(false),
         write_ordering_from_proto(ordering)?,

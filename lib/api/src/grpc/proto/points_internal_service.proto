@@ -39,61 +39,67 @@ message SyncPoints {
 message SyncPointsInternal {
   SyncPoints sync_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message UpsertPointsInternal {
   UpsertPoints upsert_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message DeletePointsInternal {
   DeletePoints delete_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message UpdateVectorsInternal {
   UpdatePointVectors update_vectors = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message DeleteVectorsInternal {
   DeletePointVectors delete_vectors = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message SetPayloadPointsInternal {
   SetPayloadPoints set_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message DeletePayloadPointsInternal {
   DeletePayloadPoints delete_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message ClearPayloadPointsInternal {
   ClearPayloadPoints clear_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message CreateFieldIndexCollectionInternal {
   CreateFieldIndexCollection create_field_index_collection = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
 }
 
 message DeleteFieldIndexCollectionInternal {
   DeleteFieldIndexCollection delete_field_index_collection = 1;
   optional uint32 shard_id = 2;
-  optional string tag = 3;
+  optional OperationMeta metadata = 3;
+}
+
+message OperationMeta {
+  uint64 peer_id = 1;
+  uint32 sub_id = 2;
+  uint64 operation_id = 3;
 }
 
 message SearchPointsInternal {

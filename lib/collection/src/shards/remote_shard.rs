@@ -44,7 +44,7 @@ use crate::operations::types::{
     UpdateResult,
 };
 use crate::operations::vector_ops::VectorOperations;
-use crate::operations::{CollectionUpdateOperations, FieldIndexOperations, TaggedOperation};
+use crate::operations::{CollectionUpdateOperations, FieldIndexOperations, WithMeta};
 use crate::shards::channel_service::ChannelService;
 use crate::shards::conversions::{
     internal_clear_payload, internal_clear_payload_by_filter, internal_create_index,
@@ -203,7 +203,7 @@ impl RemoteShard {
 
     pub async fn forward_update(
         &self,
-        operation: TaggedOperation,
+        operation: WithMeta,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
@@ -221,19 +221,19 @@ impl RemoteShard {
         &self,
         shard_id: Option<ShardId>,
         collection_name: String,
-        tagged: TaggedOperation,
+        with_meta: WithMeta,
         wait: bool,
         ordering: Option<WriteOrdering>,
     ) -> CollectionResult<UpdateResult> {
         let mut timer = ScopeDurationMeasurer::new(&self.telemetry_update_durations);
         timer.set_success(false);
 
-        let point_operation_response = match tagged.operation {
+        let point_operation_response = match with_meta.operation {
             CollectionUpdateOperations::PointOperation(point_ops) => match point_ops {
                 PointOperations::UpsertPoints(point_insert_operations) => {
                     let request = &internal_upsert_points(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         point_insert_operations,
                         wait,
@@ -248,7 +248,7 @@ impl RemoteShard {
                 PointOperations::DeletePoints { ids } => {
                     let request = &internal_delete_points(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         ids,
                         wait,
@@ -263,7 +263,7 @@ impl RemoteShard {
                 PointOperations::DeletePointsByFilter(filter) => {
                     let request = &internal_delete_points_by_filter(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         filter,
                         wait,
@@ -278,7 +278,7 @@ impl RemoteShard {
                 PointOperations::SyncPoints(operation) => {
                     let request = &internal_sync_points(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         operation,
                         wait,
@@ -295,7 +295,7 @@ impl RemoteShard {
                 VectorOperations::UpdateVectors(update_operation) => {
                     let request = &internal_update_vectors(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         update_operation,
                         wait,
@@ -312,7 +312,7 @@ impl RemoteShard {
                 VectorOperations::DeleteVectors(ids, vector_names) => {
                     let request = &internal_delete_vectors(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         ids.points,
                         vector_names.clone(),
@@ -330,7 +330,7 @@ impl RemoteShard {
                 VectorOperations::DeleteVectorsByFilter(filter, vector_names) => {
                     let request = &internal_delete_vectors_by_filter(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         filter,
                         vector_names.clone(),
@@ -350,7 +350,7 @@ impl RemoteShard {
                 PayloadOps::SetPayload(set_payload) => {
                     let request = &internal_set_payload(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         set_payload,
                         wait,
@@ -367,7 +367,7 @@ impl RemoteShard {
                 PayloadOps::DeletePayload(delete_payload) => {
                     let request = &internal_delete_payload(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         delete_payload,
                         wait,
@@ -384,7 +384,7 @@ impl RemoteShard {
                 PayloadOps::ClearPayload { points } => {
                     let request = &internal_clear_payload(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         points,
                         wait,
@@ -401,7 +401,7 @@ impl RemoteShard {
                 PayloadOps::ClearPayloadByFilter(filter) => {
                     let request = &internal_clear_payload_by_filter(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         filter,
                         wait,
@@ -418,7 +418,7 @@ impl RemoteShard {
                 PayloadOps::OverwritePayload(set_payload) => {
                     let request = &internal_set_payload(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         set_payload,
                         wait,
@@ -438,7 +438,7 @@ impl RemoteShard {
                 FieldIndexOperations::CreateIndex(create_index) => {
                     let request = &internal_create_index(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         create_index,
                         wait,
@@ -455,7 +455,7 @@ impl RemoteShard {
                 FieldIndexOperations::DeleteIndex(delete_index) => {
                     let request = &internal_delete_index(
                         shard_id,
-                        tagged.tag,
+                        with_meta.metadata,
                         collection_name,
                         delete_index,
                         wait,
@@ -563,11 +563,7 @@ pub struct CollectionCoreSearchRequest<'a>(pub(crate) (CollectionId, &'a CoreSea
 #[async_trait]
 #[allow(unused_variables)]
 impl ShardOperation for RemoteShard {
-    async fn update(
-        &self,
-        operation: TaggedOperation,
-        wait: bool,
-    ) -> CollectionResult<UpdateResult> {
+    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
         // targets the shard explicitly
         let shard_id = Some(self.id);
         self.execute_update_operation(shard_id, self.collection_id.clone(), operation, wait, None)

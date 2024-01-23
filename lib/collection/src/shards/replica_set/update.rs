@@ -8,7 +8,7 @@ use itertools::Itertools as _;
 use super::{ReplicaSetState, ReplicaState, ShardReplicaSet};
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::types::{CollectionError, CollectionResult, UpdateResult};
-use crate::operations::TaggedOperation;
+use crate::operations::WithMeta;
 use crate::shards::shard::PeerId;
 use crate::shards::shard_trait::ShardOperation as _;
 
@@ -18,7 +18,7 @@ impl ShardReplicaSet {
     /// Update local shard if any without forwarding to remote shards
     pub async fn update_local(
         &self,
-        operation: TaggedOperation,
+        operation: WithMeta,
         wait: bool,
     ) -> CollectionResult<Option<UpdateResult>> {
         if let Some(local_shard) = &*self.local.read().await {
@@ -38,7 +38,7 @@ impl ShardReplicaSet {
 
     pub async fn update_with_consistency(
         &self,
-        operation: TaggedOperation,
+        operation: WithMeta,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
@@ -102,11 +102,7 @@ impl ShardReplicaSet {
         self.replica_state.read().peers.keys().max().cloned()
     }
 
-    async fn update(
-        &self,
-        operation: TaggedOperation,
-        wait: bool,
-    ) -> CollectionResult<UpdateResult> {
+    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
         let all_res: Vec<Result<_, _>> = {
             let remotes = self.remotes.read().await;
             let local = self.local.read().await;
@@ -329,7 +325,7 @@ impl ShardReplicaSet {
     async fn forward_update(
         &self,
         leader_peer: PeerId,
-        operation: TaggedOperation,
+        operation: WithMeta,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {

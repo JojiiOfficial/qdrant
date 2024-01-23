@@ -12,7 +12,7 @@ use crate::operations::types::{
     CollectionError, CollectionInfo, CollectionResult, CoreSearchRequestBatch,
     CountRequestInternal, CountResult, PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::TaggedOperation;
+use crate::operations::WithMeta;
 use crate::shards::shard_trait::ShardOperation;
 use crate::shards::telemetry::LocalShardTelemetry;
 
@@ -56,7 +56,7 @@ impl DummyShard {
 
 #[async_trait]
 impl ShardOperation for DummyShard {
-    async fn update(&self, _: TaggedOperation, _: bool) -> CollectionResult<UpdateResult> {
+    async fn update(&self, _: WithMeta, _: bool) -> CollectionResult<UpdateResult> {
         self.dummy()
     }
 

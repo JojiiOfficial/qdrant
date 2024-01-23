@@ -18,7 +18,7 @@ use crate::operations::types::{
     CollectionInfo, CollectionResult, CoreSearchRequestBatch, CountRequestInternal, CountResult,
     PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::TaggedOperation;
+use crate::operations::WithMeta;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
 use crate::shards::telemetry::LocalShardTelemetry;
@@ -152,11 +152,7 @@ impl QueueProxyShard {
 #[async_trait]
 impl ShardOperation for QueueProxyShard {
     /// Update `wrapped_shard` while keeping track of operations
-    async fn update(
-        &self,
-        operation: TaggedOperation,
-        wait: bool,
-    ) -> CollectionResult<UpdateResult> {
+    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
         self.inner
             .as_ref()
             .expect("Queue proxy has been finalized")
@@ -381,11 +377,7 @@ impl Inner {
 #[async_trait]
 impl ShardOperation for Inner {
     /// Update `wrapped_shard` while keeping track of operations
-    async fn update(
-        &self,
-        operation: TaggedOperation,
-        wait: bool,
-    ) -> CollectionResult<UpdateResult> {
+    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
         let _update_lock = self.update_lock.lock().await;
         let local_shard = &self.wrapped_shard;
         // Shard update is within a write lock scope, because we need a way to block the shard updates
@@ -463,7 +455,7 @@ impl ShardOperation for Inner {
 ///
 /// If cancelled - none, some or all operations of the batch may be transmitted to the remote.
 async fn transfer_operations_batch(
-    batch: &[(u64, TaggedOperation)],
+    batch: &[(u64, WithMeta)],
     remote_shard: &RemoteShard,
 ) -> CollectionResult<()> {
     // TODO: naive transfer approach, transfer batch of points instead
