@@ -73,10 +73,10 @@ pub struct OperationTimestamp {
 }
 
 impl OperationTimestamp {
-    pub fn new(peer_id: PeerId, sub_id: u32, timestamp: u64) -> Self {
+    pub fn new(peer_id: PeerId, clock_id: u32, timestamp: u64) -> Self {
         Self {
             peer_id,
-            clock_id: sub_id,
+            clock_id,
             timestamp,
         }
     }

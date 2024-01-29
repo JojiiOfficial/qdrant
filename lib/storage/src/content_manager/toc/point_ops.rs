@@ -272,7 +272,7 @@ impl TableOfContent {
     pub async fn update(
         &self,
         collection_name: &str,
-        tagged: OperationWithTimestamp,
+        operation: OperationWithTimestamp,
         wait: bool,
         ordering: WriteOrdering,
         shard_selector: ShardSelectorInternal,
@@ -287,18 +287,21 @@ impl TableOfContent {
         //  │ Shard: None
         //  │ Ordering: Strong
         //  │ ShardKey: Some("cats")
+        //  │ OperationTimestamp: None
         // ┌▼──────────────────┐
         // │ First Node        │ <- update_from_client
         // └┬──────────────────┘
         //  │ Shard: Some(N)
         //  │ Ordering: Strong
         //  │ ShardKey: None
+        //  │ OperationTimestamp: None
         // ┌▼──────────────────┐
         // │ Leader node       │ <- update_from_peer
         // └┬──────────────────┘
         //  │ Shard: Some(N)
         //  │ Ordering: None(Weak)
         //  │ ShardKey: None
+        //  │ OperationTimestamp: { peer_id: IdOf(Leader node), clock_id: 1, timestamp: 123 }
         // ┌▼──────────────────┐
         // │ Updating node     │ <- update_from_peer
         // └───────────────────┘
@@ -314,7 +317,7 @@ impl TableOfContent {
                 }
             }
         };
-        if tagged.operation.is_write_operation() {
+        if operation.operation.is_write_operation() {
             self.check_write_lock()?;
         }
 
@@ -323,20 +326,20 @@ impl TableOfContent {
         let res = match shard_selector {
             ShardSelectorInternal::Empty => {
                 collection
-                    .update_from_client(tagged.operation, wait, ordering, None)
+                    .update_from_client(operation.operation, wait, ordering, None)
                     .await?
             }
             ShardSelectorInternal::All => {
                 let shard_keys = collection.get_shard_keys().await;
                 if shard_keys.is_empty() {
                     collection
-                        .update_from_client(tagged.operation, wait, ordering, None)
+                        .update_from_client(operation.operation, wait, ordering, None)
                         .await?
                 } else {
                     Self::_update_shard_keys(
                         &collection,
                         shard_keys,
-                        tagged.operation,
+                        operation.operation,
                         wait,
                         ordering,
                     )
@@ -345,16 +348,22 @@ impl TableOfContent {
             }
             ShardSelectorInternal::ShardKey(shard_key) => {
                 collection
-                    .update_from_client(tagged.operation, wait, ordering, Some(shard_key))
+                    .update_from_client(operation.operation, wait, ordering, Some(shard_key))
                     .await?
             }
             ShardSelectorInternal::ShardKeys(shard_keys) => {
-                Self::_update_shard_keys(&collection, shard_keys, tagged.operation, wait, ordering)
-                    .await?
+                Self::_update_shard_keys(
+                    &collection,
+                    shard_keys,
+                    operation.operation,
+                    wait,
+                    ordering,
+                )
+                .await?
             }
             ShardSelectorInternal::ShardId(shard_selection) => {
                 collection
-                    .update_from_peer(tagged, shard_selection, wait, ordering)
+                    .update_from_peer(operation, shard_selection, wait, ordering)
                     .await?
             }
         };

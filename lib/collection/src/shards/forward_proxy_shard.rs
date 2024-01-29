@@ -58,13 +58,13 @@ impl ForwardProxyShard {
             // TODO: Is cancelling `RemoteShard::update` safe for *receiver*?
             self.remote_shard
                 .update(
-                    CollectionUpdateOperations::FieldIndexOperation(
+                    // TODO: Assign `timestamp`!? 🤔
+                    OperationWithTimestamp::from(CollectionUpdateOperations::FieldIndexOperation(
                         FieldIndexOperations::CreateIndex(CreateIndex {
                             field_name: index_key,
                             field_schema: Some(index_type.try_into()?),
                         }),
-                    )
-                    .into(),
+                    )),
                     false,
                 )
                 .await?;
@@ -127,7 +127,7 @@ impl ForwardProxyShard {
 
         // TODO: Is cancelling `RemoteShard::update` safe for *receiver*?
         self.remote_shard
-            .update(insert_points_operation.into(), wait)
+            .update(OperationWithTimestamp::from(insert_points_operation), wait) // TODO: Assign `timestamp`!? 🤔
             .await?;
 
         Ok(next_page_offset)
