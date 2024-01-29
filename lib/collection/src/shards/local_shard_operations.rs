@@ -17,7 +17,7 @@ use crate::operations::types::{
     CountRequestInternal, CountResult, PointRequestInternal, QueryEnum, Record, UpdateResult,
     UpdateStatus,
 };
-use crate::operations::WithMeta;
+use crate::operations::OperationWithTimestamp;
 use crate::optimizers_builder::DEFAULT_INDEXING_THRESHOLD_KB;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
@@ -107,7 +107,11 @@ impl ShardOperation for LocalShard {
     /// Imply interior mutability.
     /// Performs update operation on this collection asynchronously.
     /// Explicitly waits for result to be updated.
-    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
+    async fn update(
+        &self,
+        operation: OperationWithTimestamp,
+        wait: bool,
+    ) -> CollectionResult<UpdateResult> {
         let (callback_sender, callback_receiver) = if wait {
             let (tx, rx) = oneshot::channel();
             (Some(tx), Some(rx))
@@ -134,11 +138,13 @@ impl ShardOperation for LocalShard {
             Ok(UpdateResult {
                 operation_id: Some(operation_id),
                 status: UpdateStatus::Completed,
+                timestamp: None, // TODO: Add timestamp!
             })
         } else {
             Ok(UpdateResult {
                 operation_id: Some(operation_id),
                 status: UpdateStatus::Acknowledged,
+                timestamp: None, // TODO: Add timestamp!
             })
         }
     }

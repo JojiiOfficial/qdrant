@@ -7,7 +7,7 @@ use collection::operations::consistency_params::ReadConsistency;
 use collection::operations::point_ops::WriteOrdering;
 use collection::operations::shard_selector_internal::ShardSelectorInternal;
 use collection::operations::types::*;
-use collection::operations::{CollectionUpdateOperations, WithMeta};
+use collection::operations::{CollectionUpdateOperations, OperationWithTimestamp};
 use collection::{discovery, recommendations};
 use futures::future::try_join_all;
 use segment::types::{ScoredPoint, ShardKey};
@@ -272,7 +272,7 @@ impl TableOfContent {
     pub async fn update(
         &self,
         collection_name: &str,
-        tagged: WithMeta,
+        tagged: OperationWithTimestamp,
         wait: bool,
         ordering: WriteOrdering,
         shard_selector: ShardSelectorInternal,

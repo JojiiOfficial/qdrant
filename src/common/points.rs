@@ -21,7 +21,8 @@ use collection::operations::vector_ops::{
     DeleteVectors, UpdateVectors, UpdateVectorsOp, VectorOperations,
 };
 use collection::operations::{
-    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, OperationMeta, WithMeta,
+    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, OperationTimestamp,
+    OperationWithTimestamp,
 };
 use collection::shards::shard::ShardId;
 use schemars::JsonSchema;
@@ -159,7 +160,7 @@ pub async fn do_upsert_points(
     toc: &TableOfContent,
     collection_name: &str,
     operation: PointInsertOperations,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -172,7 +173,7 @@ pub async fn do_upsert_points(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -184,7 +185,7 @@ pub async fn do_delete_points(
     toc: &TableOfContent,
     collection_name: &str,
     points: PointsSelector,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -202,7 +203,7 @@ pub async fn do_delete_points(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -214,7 +215,7 @@ pub async fn do_update_vectors(
     toc: &TableOfContent,
     collection_name: &str,
     operation: UpdateVectors,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -229,7 +230,7 @@ pub async fn do_update_vectors(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -241,7 +242,7 @@ pub async fn do_delete_vectors(
     toc: &TableOfContent,
     collection_name: &str,
     operation: DeleteVectors,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -266,7 +267,7 @@ pub async fn do_delete_vectors(
         result = Some(
             toc.update(
                 collection_name,
-                WithMeta::new(collection_operation, metadata),
+                OperationWithTimestamp::new(collection_operation, metadata),
                 wait,
                 ordering,
                 shard_selector.clone(),
@@ -281,7 +282,7 @@ pub async fn do_delete_vectors(
         result = Some(
             toc.update(
                 collection_name,
-                WithMeta::new(collection_operation, metadata),
+                OperationWithTimestamp::new(collection_operation, metadata),
                 wait,
                 ordering,
                 shard_selector,
@@ -297,7 +298,7 @@ pub async fn do_set_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: SetPayload,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -320,7 +321,7 @@ pub async fn do_set_payload(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -332,7 +333,7 @@ pub async fn do_overwrite_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: SetPayload,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -355,7 +356,7 @@ pub async fn do_overwrite_payload(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -367,7 +368,7 @@ pub async fn do_delete_payload(
     toc: &TableOfContent,
     collection_name: &str,
     operation: DeletePayload,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -390,7 +391,7 @@ pub async fn do_delete_payload(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -402,7 +403,7 @@ pub async fn do_clear_payload(
     toc: &TableOfContent,
     collection_name: &str,
     points: PointsSelector,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -422,7 +423,7 @@ pub async fn do_clear_payload(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -434,7 +435,7 @@ pub async fn do_batch_update_points(
     toc: &TableOfContent,
     collection_name: &str,
     operations: Vec<UpdateOperation>,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -550,7 +551,7 @@ pub async fn do_create_index_internal(
     collection_name: &str,
     field_name: PayloadKeyType,
     field_schema: Option<PayloadFieldSchema>,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -570,7 +571,7 @@ pub async fn do_create_index_internal(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -582,7 +583,7 @@ pub async fn do_create_index(
     dispatcher: &Dispatcher,
     collection_name: &str,
     operation: CreateFieldIndex,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -627,7 +628,7 @@ pub async fn do_delete_index_internal(
     toc: &TableOfContent,
     collection_name: &str,
     index_name: String,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,
@@ -644,7 +645,7 @@ pub async fn do_delete_index_internal(
 
     toc.update(
         collection_name,
-        WithMeta::new(collection_operation, metadata),
+        OperationWithTimestamp::new(collection_operation, metadata),
         wait,
         ordering,
         shard_selector,
@@ -656,7 +657,7 @@ pub async fn do_delete_index(
     dispatcher: &Dispatcher,
     collection_name: &str,
     index_name: String,
-    metadata: Option<OperationMeta>,
+    metadata: Option<OperationTimestamp>,
     shard_selection: Option<ShardId>,
     wait: bool,
     ordering: WriteOrdering,

@@ -39,61 +39,61 @@ pub enum FieldIndexOperations {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct WithMeta {
+pub struct OperationWithTimestamp {
     #[serde(flatten)]
     pub operation: CollectionUpdateOperations,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<OperationMeta>,
+    pub timestamp: Option<OperationTimestamp>,
 }
 
-impl WithMeta {
+impl OperationWithTimestamp {
     pub fn new(
         operation: impl Into<CollectionUpdateOperations>,
-        metadata: Option<OperationMeta>,
+        timestamp: Option<OperationTimestamp>,
     ) -> Self {
         Self {
             operation: operation.into(),
-            metadata,
+            timestamp,
         }
     }
 }
 
-impl From<CollectionUpdateOperations> for WithMeta {
+impl From<CollectionUpdateOperations> for OperationWithTimestamp {
     fn from(operation: CollectionUpdateOperations) -> Self {
         Self::new(operation, None)
     }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct OperationMeta {
+pub struct OperationTimestamp {
     peer_id: PeerId,
-    sub_id: u32,
-    operation_id: u64,
+    clock_id: u32,
+    timestamp: u64,
 }
 
-impl OperationMeta {
-    pub fn new(peer_id: PeerId, sub_id: u32, operation_id: u64) -> Self {
+impl OperationTimestamp {
+    pub fn new(peer_id: PeerId, sub_id: u32, timestamp: u64) -> Self {
         Self {
             peer_id,
-            sub_id,
-            operation_id,
+            clock_id: sub_id,
+            timestamp,
         }
     }
 }
 
-impl From<api::grpc::qdrant::OperationMeta> for OperationMeta {
-    fn from(meta: api::grpc::qdrant::OperationMeta) -> Self {
-        Self::new(meta.peer_id, meta.sub_id, meta.operation_id)
+impl From<api::grpc::qdrant::OperationTimestamp> for OperationTimestamp {
+    fn from(meta: api::grpc::qdrant::OperationTimestamp) -> Self {
+        Self::new(meta.peer_id, meta.clock_id, meta.timestamp)
     }
 }
 
-impl From<OperationMeta> for api::grpc::qdrant::OperationMeta {
-    fn from(meta: OperationMeta) -> Self {
+impl From<OperationTimestamp> for api::grpc::qdrant::OperationTimestamp {
+    fn from(meta: OperationTimestamp) -> Self {
         Self {
             peer_id: meta.peer_id,
-            sub_id: meta.sub_id,
-            operation_id: meta.operation_id,
+            clock_id: meta.clock_id,
+            timestamp: meta.timestamp,
         }
     }
 }
@@ -248,38 +248,51 @@ mod tests {
 
     proptest::proptest! {
         #[test]
-        fn tagged_operation_serde(tagged in any::<WithMeta>()) {
-            // Assert that `TaggedOperation` can be serialized
-            let input = serde_json::to_string(&tagged).unwrap();
-            let output: WithMeta = serde_json::from_str(&input).unwrap();
-            assert_eq!(tagged, output);
+        fn operation_with_timestamp_json(operation in any::<OperationWithTimestamp>()) {
+            // Assert that `OperationWithTimestamp` can be serialized
+            let input = serde_json::to_string(&operation).unwrap();
+            let output: OperationWithTimestamp = serde_json::from_str(&input).unwrap();
+            assert_eq!(operation, output);
 
-            // Assert that `TaggedOperation` can be deserialized from `CollectionUpdateOperation`
-            let input = serde_json::to_string(&tagged.operation).unwrap();
-            let output: WithMeta = serde_json::from_str(&input).unwrap();
-            assert_eq!(tagged.operation, output.operation);
+            // Assert that `OperationWithTimestamp` can be deserialized from `CollectionUpdateOperation`
+            let input = serde_json::to_string(&operation.operation).unwrap();
+            let output: OperationWithTimestamp = serde_json::from_str(&input).unwrap();
+            assert_eq!(operation.operation, output.operation);
 
             // Assert that `CollectionUpdateOperation` serializes into JSON object with a single key
             // (e.g., `{ "upsert_points": <upsert points object> }`)
-            match serde_json::to_value(&tagged.operation).unwrap() {
+            match serde_json::to_value(&operation.operation).unwrap() {
                 serde_json::Value::Object(map) if map.len() == 1 => (),
                 _ => panic!("TODO"),
             };
         }
+
+        #[test]
+        fn operation_with_timestamp_cbor(operation in any::<OperationWithTimestamp>()) {
+            // Assert that `OperationWithTimestamp` can be serialized
+            let input = serde_cbor::to_vec(&operation).unwrap();
+            let output: OperationWithTimestamp = serde_cbor::from_slice(&input).unwrap();
+            assert_eq!(operation, output);
+
+            // Assert that `OperationWithTimestamp` can be deserialized from `CollectionUpdateOperation`
+            let input = serde_cbor::to_vec(&operation.operation).unwrap();
+            let output: OperationWithTimestamp = serde_cbor::from_slice(&input).unwrap();
+            assert_eq!(operation.operation, output.operation);
+        }
     }
 
-    impl Arbitrary for WithMeta {
+    impl Arbitrary for OperationWithTimestamp {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            any::<(CollectionUpdateOperations, Option<OperationMeta>)>()
+            any::<(CollectionUpdateOperations, Option<OperationTimestamp>)>()
                 .prop_map(|(operation, metadata)| Self::new(operation, metadata))
                 .boxed()
         }
     }
 
-    impl Arbitrary for OperationMeta {
+    impl Arbitrary for OperationTimestamp {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 

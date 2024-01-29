@@ -16,7 +16,9 @@ use crate::operations::types::{
     CollectionError, CollectionInfo, CollectionResult, CoreSearchRequestBatch,
     CountRequestInternal, CountResult, PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::{CollectionUpdateOperations, CreateIndex, FieldIndexOperations, WithMeta};
+use crate::operations::{
+    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, OperationWithTimestamp,
+};
 use crate::shards::local_shard::LocalShard;
 use crate::shards::remote_shard::RemoteShard;
 use crate::shards::shard_trait::ShardOperation;
@@ -163,7 +165,11 @@ impl ForwardProxyShard {
 #[async_trait]
 impl ShardOperation for ForwardProxyShard {
     /// Update `wrapped_shard` while keeping track of the changed points
-    async fn update(&self, operation: WithMeta, wait: bool) -> CollectionResult<UpdateResult> {
+    async fn update(
+        &self,
+        operation: OperationWithTimestamp,
+        wait: bool,
+    ) -> CollectionResult<UpdateResult> {
         let _update_lock = self.update_lock.lock().await;
         let local_shard = &self.wrapped_shard;
         // Shard update is within a write lock scope, because we need a way to block the shard updates

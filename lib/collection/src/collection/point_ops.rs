@@ -10,7 +10,7 @@ use crate::operations::consistency_params::ReadConsistency;
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::shard_selector_internal::ShardSelectorInternal;
 use crate::operations::types::*;
-use crate::operations::{CollectionUpdateOperations, WithMeta};
+use crate::operations::{CollectionUpdateOperations, OperationWithTimestamp};
 use crate::shards::shard::ShardId;
 
 impl Collection {
@@ -18,7 +18,7 @@ impl Collection {
     /// Return None if there are no local shards
     pub async fn update_all_local(
         &self,
-        operation: WithMeta,
+        operation: OperationWithTimestamp,
         wait: bool,
     ) -> CollectionResult<Option<UpdateResult>> {
         let _update_lock = self.updates_lock.read().await;
@@ -41,7 +41,7 @@ impl Collection {
     /// Shard transfer aware.
     pub async fn update_from_peer(
         &self,
-        operation: WithMeta,
+        operation: OperationWithTimestamp,
         shard_selection: ShardId,
         wait: bool,
         ordering: WriteOrdering,
