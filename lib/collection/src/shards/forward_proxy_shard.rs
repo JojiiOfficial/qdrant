@@ -190,7 +190,7 @@ impl ShardOperation for ForwardProxyShard {
         with_vector: &WithVector,
         filter: Option<&Filter>,
         search_runtime_handle: &Handle,
-        _order_by: Option<&OrderBy>,
+        order_by: Option<&OrderBy>,
     ) -> CollectionResult<Vec<Record>> {
         let local_shard = &self.wrapped_shard;
         local_shard
@@ -201,7 +201,7 @@ impl ShardOperation for ForwardProxyShard {
                 with_vector,
                 filter,
                 search_runtime_handle,
-                None,
+                order_by,
             )
             .await
     }
