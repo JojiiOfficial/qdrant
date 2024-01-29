@@ -104,7 +104,7 @@ impl Collection {
                 .into_iter()
                 .map(move |(replica_set, operation)| {
                     replica_set.update_with_consistency(
-                        operation.into(), // TODO: Assign tag!
+                        OperationWithTimestamp::from(operation), // TODO: Assign `timestamp`!
                         wait,
                         ordering,
                     )
