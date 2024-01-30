@@ -104,7 +104,7 @@ impl Collection {
                 shard_to_op
                     .into_iter()
                     .map(move |(replica_set, operation)| async move {
-                        let clock = replica_set.lock_vector_clock().await;
+                        let clock = replica_set.get_clock().await;
 
                         let timestamp =
                             ClockTag::new(self.this_peer_id, clock.id() as _, clock.timestamp());

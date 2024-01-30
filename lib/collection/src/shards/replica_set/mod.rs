@@ -1,10 +1,10 @@
+mod clock_set;
 mod execute_read_operation;
 mod locally_disabled_peers;
 mod read_ops;
 mod shard_transfer;
 mod snapshots;
 mod update;
-mod vector_clock;
 
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref as _;
@@ -27,7 +27,7 @@ use crate::operations::types::{CollectionError, CollectionResult};
 use crate::save_on_disk::SaveOnDisk;
 use crate::shards::channel_service::ChannelService;
 use crate::shards::dummy_shard::DummyShard;
-use crate::shards::replica_set::vector_clock::VectorClock;
+use crate::shards::replica_set::clock_set::ClockSet;
 use crate::shards::shard::{PeerId, Shard, ShardId};
 use crate::shards::shard_config::ShardConfig;
 use crate::shards::telemetry::ReplicaSetTelemetry;
@@ -94,7 +94,7 @@ pub struct ShardReplicaSet {
     search_runtime: Handle,
     /// Lock to serialized write operations on the replicaset when a write ordering is used.
     write_ordering_lock: Mutex<()>,
-    vector_clock: Mutex<VectorClock>,
+    clock_set: Mutex<ClockSet>,
 }
 
 pub type AbortShardTransfer = Arc<dyn Fn(ShardTransfer, &str) + Send + Sync>;
@@ -179,7 +179,7 @@ impl ShardReplicaSet {
             update_runtime,
             search_runtime,
             write_ordering_lock: Mutex::new(()),
-            vector_clock: Mutex::new(VectorClock::new()),
+            clock_set: Mutex::new(ClockSet::new()),
         })
     }
 
@@ -287,7 +287,7 @@ impl ShardReplicaSet {
             update_runtime,
             search_runtime,
             write_ordering_lock: Mutex::new(()),
-            vector_clock: Mutex::new(VectorClock::new()),
+            clock_set: Mutex::new(ClockSet::new()),
         };
 
         if local_load_failure && replica_set.active_remote_shards().await.is_empty() {
