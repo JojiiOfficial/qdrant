@@ -40,80 +40,80 @@ message SyncPoints {
 message SyncPointsInternal {
   SyncPoints sync_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message UpsertPointsInternal {
   UpsertPoints upsert_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message DeletePointsInternal {
   DeletePoints delete_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message UpdateVectorsInternal {
   UpdatePointVectors update_vectors = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message DeleteVectorsInternal {
   DeletePointVectors delete_vectors = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message SetPayloadPointsInternal {
   SetPayloadPoints set_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message DeletePayloadPointsInternal {
   DeletePayloadPoints delete_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message ClearPayloadPointsInternal {
   ClearPayloadPoints clear_payload_points = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message CreateFieldIndexCollectionInternal {
   CreateFieldIndexCollection create_field_index_collection = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
 message DeleteFieldIndexCollectionInternal {
   DeleteFieldIndexCollection delete_field_index_collection = 1;
   optional uint32 shard_id = 2;
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
-// TODO: Is this backward-compatible with `PointsOperationResponse`!?
+// Has to be backward compatible with `PointsOperationResponse`!
 message PointsOperationResponseInternal {
   UpdateResultInternal result = 1;
   double time = 2; // Time spent to process
 }
 
-// TODO: Is this backward-compatible with `UpdateResult`!?
+// Has to be backward compatible with `UpdateResult`!
 message UpdateResultInternal {
   optional uint64 operation_id = 1; // Number of operation
   UpdateStatus status = 2; // Operation status
-  optional OperationTimestamp timestamp = 3;
+  optional ClockTag clock_tag = 3;
 }
 
-message OperationTimestamp {
+message ClockTag {
   uint64 peer_id = 1;
   uint32 clock_id = 2;
-  uint64 timestamp = 3;
+  uint64 clock_tick = 3;
 }
 
 message SearchPointsInternal {

@@ -6,13 +6,13 @@ use segment::types::*;
 use tokio::runtime::Handle;
 
 use crate::operations::types::*;
-use crate::operations::OperationWithTimestamp;
+use crate::operations::OperationWithClockTag;
 
 #[async_trait]
 pub trait ShardOperation {
     async fn update(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<UpdateResult>;
 

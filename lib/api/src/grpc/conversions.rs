@@ -1308,7 +1308,7 @@ impl From<UpdateResult> for UpdateResultInternal {
         Self {
             operation_id: res.operation_id,
             status: res.status,
-            timestamp: None,
+            clock_tag: None,
         }
     }
 }

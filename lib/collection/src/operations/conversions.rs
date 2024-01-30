@@ -850,7 +850,7 @@ impl From<UpdateResult> for api::grpc::qdrant::UpdateResultInternal {
         Self {
             operation_id: res.operation_id,
             status: res.status.into(),
-            timestamp: res.timestamp.map(Into::into),
+            clock_tag: res.clock_tag.map(Into::into),
         }
     }
 }
@@ -868,7 +868,7 @@ impl TryFrom<api::grpc::qdrant::UpdateResultInternal> for UpdateResult {
         let res = Self {
             operation_id: res.operation_id,
             status: res.status.try_into()?,
-            timestamp: res.timestamp.map(Into::into),
+            clock_tag: res.clock_tag.map(Into::into),
         };
 
         Ok(res)

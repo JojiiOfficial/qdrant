@@ -7050,7 +7050,7 @@ pub struct SyncPointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7063,7 +7063,7 @@ pub struct UpsertPointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7076,7 +7076,7 @@ pub struct DeletePointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7089,7 +7089,7 @@ pub struct UpdateVectorsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7102,7 +7102,7 @@ pub struct DeleteVectorsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7115,7 +7115,7 @@ pub struct SetPayloadPointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7128,7 +7128,7 @@ pub struct DeletePayloadPointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7141,7 +7141,7 @@ pub struct ClearPayloadPointsInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7156,7 +7156,7 @@ pub struct CreateFieldIndexCollectionInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]
@@ -7171,9 +7171,9 @@ pub struct DeleteFieldIndexCollectionInternal {
     #[prost(uint32, optional, tag = "2")]
     pub shard_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
-/// TODO: Is this backward-compatible with `PointsOperationResponse`!?
+/// Has to be backward compatible with `PointsOperationResponse`!
 #[derive(serde::Serialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -7184,7 +7184,7 @@ pub struct PointsOperationResponseInternal {
     #[prost(double, tag = "2")]
     pub time: f64,
 }
-/// TODO: Is this backward-compatible with `UpdateResult`!?
+/// Has to be backward compatible with `UpdateResult`!
 #[derive(serde::Serialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -7196,18 +7196,18 @@ pub struct UpdateResultInternal {
     #[prost(enumeration = "UpdateStatus", tag = "2")]
     pub status: i32,
     #[prost(message, optional, tag = "3")]
-    pub timestamp: ::core::option::Option<OperationTimestamp>,
+    pub clock_tag: ::core::option::Option<ClockTag>,
 }
 #[derive(serde::Serialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OperationTimestamp {
+pub struct ClockTag {
     #[prost(uint64, tag = "1")]
     pub peer_id: u64,
     #[prost(uint32, tag = "2")]
     pub clock_id: u32,
     #[prost(uint64, tag = "3")]
-    pub timestamp: u64,
+    pub clock_tick: u64,
 }
 #[derive(serde::Serialize)]
 #[derive(validator::Validate)]

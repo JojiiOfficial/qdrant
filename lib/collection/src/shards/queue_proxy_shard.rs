@@ -18,7 +18,7 @@ use crate::operations::types::{
     CollectionInfo, CollectionResult, CoreSearchRequestBatch, CountRequestInternal, CountResult,
     PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::OperationWithTimestamp;
+use crate::operations::OperationWithClockTag;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
 use crate::shards::telemetry::LocalShardTelemetry;
@@ -154,7 +154,7 @@ impl ShardOperation for QueueProxyShard {
     /// Update `wrapped_shard` while keeping track of operations
     async fn update(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         self.inner
@@ -383,7 +383,7 @@ impl ShardOperation for Inner {
     /// Update `wrapped_shard` while keeping track of operations
     async fn update(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let _update_lock = self.update_lock.lock().await;
@@ -463,7 +463,7 @@ impl ShardOperation for Inner {
 ///
 /// If cancelled - none, some or all operations of the batch may be transmitted to the remote.
 async fn transfer_operations_batch(
-    batch: &[(u64, OperationWithTimestamp)],
+    batch: &[(u64, OperationWithClockTag)],
     remote_shard: &RemoteShard,
 ) -> CollectionResult<()> {
     // TODO: naive transfer approach, transfer batch of points instead

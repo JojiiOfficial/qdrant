@@ -21,7 +21,7 @@ use crate::operations::types::{
     CollectionError, CollectionInfo, CollectionResult, CoreSearchRequestBatch,
     CountRequestInternal, CountResult, PointRequestInternal, Record, UpdateResult,
 };
-use crate::operations::OperationWithTimestamp;
+use crate::operations::OperationWithClockTag;
 use crate::shards::local_shard::LocalShard;
 use crate::shards::shard_trait::ShardOperation;
 use crate::shards::telemetry::LocalShardTelemetry;
@@ -131,7 +131,7 @@ impl ShardOperation for ProxyShard {
     /// Update `wrapped_shard` while keeping track of the changed points
     async fn update(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let local_shard = &self.wrapped_shard;

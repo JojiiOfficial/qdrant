@@ -10,7 +10,7 @@ use crate::operations::consistency_params::ReadConsistency;
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::shard_selector_internal::ShardSelectorInternal;
 use crate::operations::types::*;
-use crate::operations::{CollectionUpdateOperations, OperationTimestamp, OperationWithTimestamp};
+use crate::operations::{ClockTag, CollectionUpdateOperations, OperationWithClockTag};
 use crate::shards::shard::ShardId;
 
 impl Collection {
@@ -18,7 +18,7 @@ impl Collection {
     /// Return None if there are no local shards
     pub async fn update_all_local(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<Option<UpdateResult>> {
         let _update_lock = self.updates_lock.read().await;
@@ -41,7 +41,7 @@ impl Collection {
     /// Shard transfer aware.
     pub async fn update_from_peer(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         shard_selection: ShardId,
         wait: bool,
         ordering: WriteOrdering,
@@ -106,15 +106,12 @@ impl Collection {
                     .map(move |(replica_set, operation)| async move {
                         let clock = replica_set.lock_vector_clock().await;
 
-                        let timestamp = OperationTimestamp::new(
-                            self.this_peer_id,
-                            clock.id() as _,
-                            clock.timestamp(),
-                        );
+                        let timestamp =
+                            ClockTag::new(self.this_peer_id, clock.id() as _, clock.timestamp());
 
                         replica_set
                             .update_with_consistency(
-                                OperationWithTimestamp::new(operation, Some(timestamp)),
+                                OperationWithClockTag::new(operation, Some(timestamp)),
                                 wait,
                                 ordering,
                             )
