@@ -106,12 +106,12 @@ impl Collection {
                     .map(move |(replica_set, operation)| async move {
                         let clock = replica_set.get_clock().await;
 
-                        let timestamp =
-                            ClockTag::new(self.this_peer_id, clock.id() as _, clock.timestamp());
+                        let clock_tag =
+                            ClockTag::new(self.this_peer_id, clock.id() as _, clock.current_tick());
 
                         replica_set
                             .update_with_consistency(
-                                OperationWithClockTag::new(operation, Some(timestamp)),
+                                OperationWithClockTag::new(operation, Some(clock_tag)),
                                 wait,
                                 ordering,
                             )

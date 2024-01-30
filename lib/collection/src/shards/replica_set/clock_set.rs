@@ -43,8 +43,8 @@ impl ClockGuard {
         self.id
     }
 
-    pub fn timestamp(&self) -> u64 {
-        self.clock.timestamp()
+    pub fn current_tick(&self) -> u64 {
+        self.clock.current_tick()
     }
 
     pub fn tick(&mut self) -> u64 {
@@ -82,7 +82,7 @@ impl Clock {
         }
     }
 
-    pub fn timestamp(&self) -> u64 {
+    pub fn current_tick(&self) -> u64 {
         self.clock.load(Ordering::Relaxed)
     }
 
