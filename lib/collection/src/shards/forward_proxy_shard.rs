@@ -17,7 +17,7 @@ use crate::operations::types::{
     CountRequestInternal, CountResult, PointRequestInternal, Record, UpdateResult,
 };
 use crate::operations::{
-    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, OperationWithTimestamp,
+    CollectionUpdateOperations, CreateIndex, FieldIndexOperations, OperationWithClockTag,
 };
 use crate::shards::local_shard::LocalShard;
 use crate::shards::remote_shard::RemoteShard;
@@ -58,8 +58,8 @@ impl ForwardProxyShard {
             // TODO: Is cancelling `RemoteShard::update` safe for *receiver*?
             self.remote_shard
                 .update(
-                    // TODO: Assign `timestamp`!? 🤔
-                    OperationWithTimestamp::from(CollectionUpdateOperations::FieldIndexOperation(
+                    // TODO: Assign `clock_tag`!? 🤔
+                    OperationWithClockTag::from(CollectionUpdateOperations::FieldIndexOperation(
                         FieldIndexOperations::CreateIndex(CreateIndex {
                             field_name: index_key,
                             field_schema: Some(index_type.try_into()?),
@@ -127,7 +127,7 @@ impl ForwardProxyShard {
 
         // TODO: Is cancelling `RemoteShard::update` safe for *receiver*?
         self.remote_shard
-            .update(OperationWithTimestamp::from(insert_points_operation), wait) // TODO: Assign `timestamp`!? 🤔
+            .update(OperationWithClockTag::from(insert_points_operation), wait) // TODO: Assign `clock_tag`!? 🤔
             .await?;
 
         Ok(next_page_offset)
@@ -167,7 +167,7 @@ impl ShardOperation for ForwardProxyShard {
     /// Update `wrapped_shard` while keeping track of the changed points
     async fn update(
         &self,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let _update_lock = self.update_lock.lock().await;

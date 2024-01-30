@@ -29,9 +29,7 @@ use collection::operations::types::{
     QueryEnum, RecommendExample, ScrollRequestInternal,
 };
 use collection::operations::vector_ops::{DeleteVectors, PointVectors, UpdateVectors};
-use collection::operations::{
-    CollectionUpdateOperations, OperationTimestamp, OperationWithTimestamp,
-};
+use collection::operations::{ClockTag, CollectionUpdateOperations, OperationWithClockTag};
 use collection::shards::shard::ShardId;
 use segment::types::{
     ExtendedPointId, Filter, PayloadFieldSchema, PayloadSchemaParams, PayloadSchemaType,
@@ -94,7 +92,7 @@ pub(crate) fn convert_shard_selector_for_read(
 pub async fn upsert(
     toc: &TableOfContent,
     upsert_points: UpsertPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let UpsertPoints {
@@ -132,7 +130,7 @@ pub async fn upsert(
 pub async fn sync(
     toc: &TableOfContent,
     sync_points: SyncPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let SyncPoints {
@@ -169,7 +167,7 @@ pub async fn sync(
     let result = toc
         .update(
             &collection_name,
-            OperationWithTimestamp::new(collection_operation, metadata),
+            OperationWithClockTag::new(collection_operation, metadata),
             wait.unwrap_or(false),
             write_ordering_from_proto(ordering)?,
             shard_selector,
@@ -184,7 +182,7 @@ pub async fn sync(
 pub async fn delete(
     toc: &TableOfContent,
     delete_points: DeletePoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let DeletePoints {
@@ -220,7 +218,7 @@ pub async fn delete(
 pub async fn update_vectors(
     toc: &TableOfContent,
     update_point_vectors: UpdatePointVectors,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let UpdatePointVectors {
@@ -270,7 +268,7 @@ pub async fn update_vectors(
 pub async fn delete_vectors(
     toc: &TableOfContent,
     delete_point_vectors: DeletePointVectors,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let DeletePointVectors {
@@ -315,7 +313,7 @@ pub async fn delete_vectors(
 pub async fn set_payload(
     toc: &TableOfContent,
     set_payload_points: SetPayloadPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let SetPayloadPoints {
@@ -355,7 +353,7 @@ pub async fn set_payload(
 pub async fn overwrite_payload(
     toc: &TableOfContent,
     set_payload_points: SetPayloadPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let SetPayloadPoints {
@@ -395,7 +393,7 @@ pub async fn overwrite_payload(
 pub async fn delete_payload(
     toc: &TableOfContent,
     delete_payload_points: DeletePayloadPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let DeletePayloadPoints {
@@ -435,7 +433,7 @@ pub async fn delete_payload(
 pub async fn clear_payload(
     toc: &TableOfContent,
     clear_payload_points: ClearPayloadPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let ClearPayloadPoints {
@@ -471,7 +469,7 @@ pub async fn clear_payload(
 pub async fn update_batch(
     toc: &TableOfContent,
     update_batch_points: UpdateBatchPoints,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<UpdateBatchResponse>, Status> {
     let UpdateBatchPoints {
@@ -751,7 +749,7 @@ fn convert_field_type(
 pub async fn create_field_index(
     toc: &Dispatcher,
     create_field_index_collection: CreateFieldIndexCollection,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let CreateFieldIndexCollection {
@@ -790,7 +788,7 @@ pub async fn create_field_index(
 pub async fn create_field_index_internal(
     toc: &TableOfContent,
     create_field_index_collection: CreateFieldIndexCollection,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let CreateFieldIndexCollection {
@@ -825,7 +823,7 @@ pub async fn create_field_index_internal(
 pub async fn delete_field_index(
     toc: &Dispatcher,
     delete_field_index_collection: DeleteFieldIndexCollection,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let DeleteFieldIndexCollection {
@@ -855,7 +853,7 @@ pub async fn delete_field_index(
 pub async fn delete_field_index_internal(
     toc: &TableOfContent,
     delete_field_index_collection: DeleteFieldIndexCollection,
-    metadata: Option<OperationTimestamp>,
+    metadata: Option<ClockTag>,
     shard_selection: Option<ShardId>,
 ) -> Result<Response<PointsOperationResponseInternal>, Status> {
     let DeleteFieldIndexCollection {

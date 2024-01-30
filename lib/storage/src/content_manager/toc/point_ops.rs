@@ -7,7 +7,7 @@ use collection::operations::consistency_params::ReadConsistency;
 use collection::operations::point_ops::WriteOrdering;
 use collection::operations::shard_selector_internal::ShardSelectorInternal;
 use collection::operations::types::*;
-use collection::operations::{CollectionUpdateOperations, OperationWithTimestamp};
+use collection::operations::{CollectionUpdateOperations, OperationWithClockTag};
 use collection::{discovery, recommendations};
 use futures::future::try_join_all;
 use segment::types::{ScoredPoint, ShardKey};
@@ -272,7 +272,7 @@ impl TableOfContent {
     pub async fn update(
         &self,
         collection_name: &str,
-        operation: OperationWithTimestamp,
+        operation: OperationWithClockTag,
         wait: bool,
         ordering: WriteOrdering,
         shard_selector: ShardSelectorInternal,
@@ -287,21 +287,21 @@ impl TableOfContent {
         //  │ Shard: None
         //  │ Ordering: Strong
         //  │ ShardKey: Some("cats")
-        //  │ OperationTimestamp: None
+        //  │ ClockTag: None
         // ┌▼──────────────────┐
         // │ First Node        │ <- update_from_client
         // └┬──────────────────┘
         //  │ Shard: Some(N)
         //  │ Ordering: Strong
         //  │ ShardKey: None
-        //  │ OperationTimestamp: None
+        //  │ ClockTag: None
         // ┌▼──────────────────┐
         // │ Leader node       │ <- update_from_peer
         // └┬──────────────────┘
         //  │ Shard: Some(N)
         //  │ Ordering: None(Weak)
         //  │ ShardKey: None
-        //  │ OperationTimestamp: { peer_id: IdOf(Leader node), clock_id: 1, timestamp: 123 }
+        //  │ ClockTag: { peer_id: IdOf(Leader node), clock_id: 1, clock_tick: 123 }
         // ┌▼──────────────────┐
         // │ Updating node     │ <- update_from_peer
         // └───────────────────┘
