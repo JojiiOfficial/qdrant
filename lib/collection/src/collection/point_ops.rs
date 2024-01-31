@@ -18,7 +18,7 @@ impl Collection {
     /// Return None if there are no local shards
     pub async fn update_all_local(
         &self,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
     ) -> CollectionResult<Option<UpdateResult>> {
         let _update_lock = self.updates_lock.read().await;
@@ -26,7 +26,11 @@ impl Collection {
 
         let res: Vec<_> = shard_holder_guard
             .all_shards()
-            .map(|shard| shard.update_local(operation.clone(), wait))
+            // The operation *can't* have a clock tag!
+            //
+            // We update *all* shards with a single operation, but each shard has it's own clock,
+            // so it's *impossible* to assign any single clock tag to this operation.
+            .map(|shard| shard.update_local(OperationWithClockTag::from(operation.clone()), wait))
             .collect();
 
         let results: Vec<_> = future::try_join_all(res).await?;
