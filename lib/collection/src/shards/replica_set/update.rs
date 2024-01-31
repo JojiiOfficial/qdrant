@@ -8,7 +8,7 @@ use itertools::Itertools as _;
 use super::{ReplicaSetState, ReplicaState, ShardReplicaSet};
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::types::{CollectionError, CollectionResult, UpdateResult};
-use crate::operations::OperationWithClockTag;
+use crate::operations::{CollectionUpdateOperations, OperationWithClockTag};
 use crate::shards::shard::PeerId;
 use crate::shards::shard_trait::ShardOperation as _;
 
@@ -38,7 +38,7 @@ impl ShardReplicaSet {
 
     pub async fn update_with_consistency(
         &self,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
@@ -104,7 +104,7 @@ impl ShardReplicaSet {
 
     async fn update(
         &self,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
         let all_res: Vec<Result<_, _>> = {
@@ -128,6 +128,8 @@ impl ShardReplicaSet {
                     self.shard_id, this_peer_id
                 )));
             }
+
+            let operation = OperationWithClockTag::from(operation); // TODO: Assign clock tag!
 
             let mut update_futures = Vec::with_capacity(active_remote_shards.len() + 1);
 
@@ -329,24 +331,22 @@ impl ShardReplicaSet {
     async fn forward_update(
         &self,
         leader_peer: PeerId,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
         let remotes_guard = self.remotes.read().await;
-        let remote_leader = remotes_guard.iter().find(|r| r.peer_id == leader_peer);
 
-        match remote_leader {
-            Some(remote_leader) => {
-                remote_leader
-                    .forward_update(operation, wait, ordering)
-                    .await
-            }
-            None => Err(CollectionError::service_error(format!(
+        let Some(remote_leader) = remotes_guard.iter().find(|r| r.peer_id == leader_peer) else {
+            return Err(CollectionError::service_error(format!(
                 "Cannot forward update to shard {} because was removed from the replica set",
                 self.shard_id
-            ))),
-        }
+            )));
+        };
+
+        remote_leader
+            .forward_update(OperationWithClockTag::from(operation), wait, ordering) // `clock_tag` *have to* be `None`!
+            .await
     }
 }
 

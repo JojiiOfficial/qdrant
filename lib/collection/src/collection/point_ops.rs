@@ -57,11 +57,17 @@ impl Collection {
             None => None,
             Some(target_shard) => match ordering {
                 WriteOrdering::Weak => target_shard.update_local(operation, wait).await?,
-                WriteOrdering::Medium | WriteOrdering::Strong => Some(
-                    target_shard
-                        .update_with_consistency(operation, wait, ordering)
-                        .await?,
-                ),
+                WriteOrdering::Medium | WriteOrdering::Strong => {
+                    if operation.clock_tag.is_some() {
+                        log::error!("TODO"); // TODO!
+                    }
+
+                    let res = target_shard
+                        .update_with_consistency(operation.operation, wait, ordering)
+                        .await?;
+
+                    Some(res)
+                }
             },
         };
 
@@ -107,11 +113,7 @@ impl Collection {
             let shard_requests = shard_to_op
                 .into_iter()
                 .map(move |(replica_set, operation)| {
-                    replica_set.update_with_consistency(
-                        OperationWithClockTag::from(operation), // TODO: Assign `clock_tag`!
-                        wait,
-                        ordering,
-                    )
+                    replica_set.update_with_consistency(operation, wait, ordering)
                 });
             future::join_all(shard_requests).await
         };
