@@ -1,3 +1,4 @@
+use std::cmp;
 use std::ops::Deref as _;
 use std::time::Duration;
 
@@ -5,10 +6,10 @@ use futures::stream::FuturesUnordered;
 use futures::{FutureExt as _, StreamExt as _};
 use itertools::Itertools as _;
 
-use super::{clock_set, ReplicaSetState, ReplicaState, ShardReplicaSet};
+use super::{ReplicaSetState, ReplicaState, ShardReplicaSet};
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::types::{CollectionError, CollectionResult, UpdateResult};
-use crate::operations::OperationWithClockTag;
+use crate::operations::{ClockTag, CollectionUpdateOperations, OperationWithClockTag};
 use crate::shards::shard::PeerId;
 use crate::shards::shard_trait::ShardOperation as _;
 
@@ -36,13 +37,9 @@ impl ShardReplicaSet {
         }
     }
 
-    pub async fn get_clock(&self) -> clock_set::ClockGuard {
-        self.clock_set.lock().await.get_clock()
-    }
-
     pub async fn update_with_consistency(
         &self,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
@@ -108,81 +105,83 @@ impl ShardReplicaSet {
 
     async fn update(
         &self,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
     ) -> CollectionResult<UpdateResult> {
-        let all_res: Vec<Result<_, _>> = {
-            let remotes = self.remotes.read().await;
-            let local = self.local.read().await;
-            let this_peer_id = self.this_peer_id();
+        let remotes = self.remotes.read().await;
+        let local = self.local.read().await;
+        let mut clock = self.clock_set.lock().await.get_clock();
 
-            // target all remote peers that can receive updates
-            let active_remote_shards: Vec<_> = remotes
-                .iter()
-                .filter(|rs| self.peer_is_active_or_pending(&rs.peer_id))
-                .collect();
+        let this_peer_id = self.this_peer_id();
 
-            // local is defined AND the peer itself can receive updates
-            let local_is_updatable =
-                local.is_some() && self.peer_is_active_or_pending(&this_peer_id);
+        // target all remote peers that can receive updates
+        let active_remote_shards: Vec<_> = remotes
+            .iter()
+            .filter(|rs| self.peer_is_active_or_pending(&rs.peer_id))
+            .collect();
 
-            if active_remote_shards.is_empty() && !local_is_updatable {
-                return Err(CollectionError::service_error(format!(
-                    "The replica set for shard {} on peer {} has no active replica",
-                    self.shard_id, this_peer_id
-                )));
-            }
+        // local is defined AND the peer itself can receive updates
+        let local_is_updatable = local.is_some() && self.peer_is_active_or_pending(&this_peer_id);
 
-            let mut update_futures = Vec::with_capacity(active_remote_shards.len() + 1);
+        if active_remote_shards.is_empty() && !local_is_updatable {
+            return Err(CollectionError::service_error(format!(
+                "The replica set for shard {} on peer {} has no active replica",
+                self.shard_id, this_peer_id
+            )));
+        }
 
-            if let Some(local) = local.deref() {
-                if self.peer_is_active_or_pending(&this_peer_id) {
-                    let local_wait =
-                        if self.peer_state(&this_peer_id) == Some(ReplicaState::Listener) {
-                            false
-                        } else {
-                            wait
-                        };
+        let current_clock_tick = clock.tick_once();
+        let clock_tag = ClockTag::new(this_peer_id, clock.id() as _, current_clock_tick);
+        let operation = OperationWithClockTag::new(operation, Some(clock_tag));
 
-                    let operation = operation.clone();
+        let mut update_futures = Vec::with_capacity(active_remote_shards.len() + 1);
 
-                    let local_update = async move {
-                        local
-                            .get()
-                            .update(operation, local_wait)
-                            .await
-                            .map(|ok| (this_peer_id, ok))
-                            .map_err(|err| (this_peer_id, err))
-                    };
-
-                    update_futures.push(local_update.left_future());
-                }
-            }
-
-            for remote in active_remote_shards {
-                let operation = operation.clone();
-
-                let remote_update = async move {
-                    remote
-                        .update(operation, wait)
-                        .await
-                        .map(|ok| (remote.peer_id, ok))
-                        .map_err(|err| (remote.peer_id, err))
+        if let Some(local) = local.deref() {
+            if self.peer_is_active_or_pending(&this_peer_id) {
+                let local_wait = if self.peer_state(&this_peer_id) == Some(ReplicaState::Listener) {
+                    false
+                } else {
+                    wait
                 };
 
-                update_futures.push(remote_update.right_future());
-            }
+                let operation = operation.clone();
 
-            match self.shared_storage_config.update_concurrency {
-                Some(concurrency) => {
-                    futures::stream::iter(update_futures)
-                        .buffer_unordered(concurrency.get())
-                        .collect()
+                let local_update = async move {
+                    local
+                        .get()
+                        .update(operation, local_wait)
                         .await
-                }
+                        .map(|ok| (this_peer_id, ok))
+                        .map_err(|err| (this_peer_id, err))
+                };
 
-                None => FuturesUnordered::from_iter(update_futures).collect().await,
+                update_futures.push(local_update.left_future());
             }
+        }
+
+        for remote in active_remote_shards {
+            let operation = operation.clone();
+
+            let remote_update = async move {
+                remote
+                    .update(operation, wait)
+                    .await
+                    .map(|ok| (remote.peer_id, ok))
+                    .map_err(|err| (remote.peer_id, err))
+            };
+
+            update_futures.push(remote_update.right_future());
+        }
+
+        let all_res: Vec<Result<_, _>> = match self.shared_storage_config.update_concurrency {
+            Some(concurrency) => {
+                futures::stream::iter(update_futures)
+                    .buffer_unordered(concurrency.get())
+                    .collect()
+                    .await
+            }
+
+            None => FuturesUnordered::from_iter(update_futures).collect().await,
         };
 
         let total_results = all_res.len();
@@ -333,24 +332,22 @@ impl ShardReplicaSet {
     async fn forward_update(
         &self,
         leader_peer: PeerId,
-        operation: OperationWithClockTag,
+        operation: CollectionUpdateOperations,
         wait: bool,
         ordering: WriteOrdering,
     ) -> CollectionResult<UpdateResult> {
         let remotes_guard = self.remotes.read().await;
-        let remote_leader = remotes_guard.iter().find(|r| r.peer_id == leader_peer);
 
-        match remote_leader {
-            Some(remote_leader) => {
-                remote_leader
-                    .forward_update(operation, wait, ordering)
-                    .await
-            }
-            None => Err(CollectionError::service_error(format!(
+        let Some(remote_leader) = remotes_guard.iter().find(|r| r.peer_id == leader_peer) else {
+            return Err(CollectionError::service_error(format!(
                 "Cannot forward update to shard {} because was removed from the replica set",
                 self.shard_id
-            ))),
-        }
+            )));
+        };
+
+        remote_leader
+            .forward_update(OperationWithClockTag::from(operation), wait, ordering) // `clock_tag` *have to* be `None`!
+            .await
     }
 }
 

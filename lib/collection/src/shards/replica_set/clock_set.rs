@@ -14,7 +14,6 @@ impl ClockSet {
     pub fn get_clock(&mut self) -> ClockGuard {
         for (id, clock) in self.clocks.iter().enumerate() {
             if clock.lock() {
-                clock.tick();
                 return ClockGuard::new(id, clock.clone());
             }
         }
@@ -47,8 +46,12 @@ impl ClockGuard {
         self.clock.current_tick()
     }
 
-    pub fn tick(&mut self) -> u64 {
-        self.clock.tick()
+    pub fn tick_once(&mut self) -> u64 {
+        self.clock.tick(1)
+    }
+
+    pub fn advance_to(&mut self, tick: u64) -> u64 {
+        self.clock.advance_to(tick)
     }
 
     pub fn release(self) {
@@ -86,8 +89,9 @@ impl Clock {
         self.clock.load(Ordering::Relaxed)
     }
 
-    pub fn tick(&self) -> u64 {
-        self.clock.fetch_add(1, Ordering::Relaxed) + 1
+    pub fn tick(&self, ticks: u64) -> u64 {
+        self.clock.fetch_add(ticks, Ordering::Relaxed) + ticks
+    }
     }
 
     pub fn lock(&self) -> bool {

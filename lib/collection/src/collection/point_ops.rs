@@ -10,7 +10,7 @@ use crate::operations::consistency_params::ReadConsistency;
 use crate::operations::point_ops::WriteOrdering;
 use crate::operations::shard_selector_internal::ShardSelectorInternal;
 use crate::operations::types::*;
-use crate::operations::{ClockTag, CollectionUpdateOperations, OperationWithClockTag};
+use crate::operations::{CollectionUpdateOperations, OperationWithClockTag};
 use crate::shards::shard::ShardId;
 
 impl Collection {
@@ -57,11 +57,17 @@ impl Collection {
             None => None,
             Some(target_shard) => match ordering {
                 WriteOrdering::Weak => target_shard.update_local(operation, wait).await?,
-                WriteOrdering::Medium | WriteOrdering::Strong => Some(
-                    target_shard
-                        .update_with_consistency(operation, wait, ordering)
-                        .await?,
-                ),
+                WriteOrdering::Medium | WriteOrdering::Strong => {
+                    if operation.clock_tag.is_some() {
+                        log::error!("TODO"); // TODO!
+                    }
+
+                    let res = target_shard
+                        .update_with_consistency(operation.operation, wait, ordering)
+                        .await?;
+
+                    Some(res)
+                }
             },
         };
 
@@ -108,17 +114,8 @@ impl Collection {
                 shard_to_op
                     .into_iter()
                     .map(move |(replica_set, operation)| async move {
-                        let clock = replica_set.get_clock().await;
-
-                        let clock_tag =
-                            ClockTag::new(self.this_peer_id, clock.id() as _, clock.current_tick());
-
                         replica_set
-                            .update_with_consistency(
-                                OperationWithClockTag::new(operation, Some(clock_tag)),
-                                wait,
-                                ordering,
-                            )
+                            .update_with_consistency(operation, wait, ordering)
                             .await
                     });
 
