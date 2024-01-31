@@ -67,9 +67,9 @@ impl From<CollectionUpdateOperations> for OperationWithClockTag {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ClockTag {
-    peer_id: PeerId,
-    clock_id: u32,
-    clock_tick: u64,
+    pub peer_id: PeerId,
+    pub clock_id: u32,
+    pub clock_tick: u64,
 }
 
 impl ClockTag {

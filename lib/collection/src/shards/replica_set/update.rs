@@ -198,6 +198,32 @@ impl ShardReplicaSet {
 
         let (successes, failures): (Vec<_>, Vec<_>) = all_res.into_iter().partition_result();
 
+        // Advance clock if some replica echoed *newer* tick
+
+        let mut new_clock_tick = current_clock_tick;
+
+        for (_, result) in &successes {
+            let Some(echo_tag) = result.clock_tag else {
+                continue;
+            };
+
+            if echo_tag.peer_id != clock_tag.peer_id {
+                // TODO: `log::warn`!?
+                continue;
+            }
+
+            if echo_tag.clock_id != clock_tag.clock_id {
+                // TODO: `log::warn`!?
+                continue;
+            }
+
+            new_clock_tick = cmp::max(new_clock_tick, echo_tag.clock_tick);
+        }
+
+        if new_clock_tick > current_clock_tick {
+            clock.advance_to(new_clock_tick);
+        }
+
         // Notify consensus about failures if:
         // 1. There is at least one success, otherwise it might be a problem of sending node
         // 2. ???

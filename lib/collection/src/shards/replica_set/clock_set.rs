@@ -92,6 +92,9 @@ impl Clock {
     pub fn tick(&self, ticks: u64) -> u64 {
         self.clock.fetch_add(ticks, Ordering::Relaxed) + ticks
     }
+
+    pub fn advance_to(&self, tick: u64) -> u64 {
+        self.clock.fetch_max(tick, Ordering::Relaxed)
     }
 
     pub fn lock(&self) -> bool {
