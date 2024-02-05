@@ -1,6 +1,7 @@
 //! Contains functions for interpreting filter queries and defining if given points pass the conditions
 
 use serde_json::Value;
+use smol_str::SmolStr;
 
 use crate::types::{
     AnyVariants, DateTimePayloadType, FieldCondition, FloatPayloadType, GeoBoundingBox, GeoPoint,
@@ -91,7 +92,10 @@ impl ValueChecker for Match {
                 _ => false,
             },
             Match::Any(MatchAny { any }) => match (payload, any) {
-                (Value::String(stored), AnyVariants::Keywords(list)) => list.contains(stored),
+                (Value::String(stored), AnyVariants::Keywords(list)) => {
+                    let s: SmolStr = stored.into();
+                    list.contains(&s)
+                }
                 (Value::Number(stored), AnyVariants::Integers(list)) => stored
                     .as_i64()
                     .map(|num| list.contains(&num))
@@ -99,7 +103,10 @@ impl ValueChecker for Match {
                 _ => false,
             },
             Match::Except(MatchExcept { except }) => match (payload, except) {
-                (Value::String(stored), AnyVariants::Keywords(list)) => !list.contains(stored),
+                (Value::String(stored), AnyVariants::Keywords(list)) => {
+                    let s: SmolStr = stored.into();
+                    !list.contains(&s)
+                }
                 (Value::Number(stored), AnyVariants::Integers(list)) => stored
                     .as_i64()
                     .map(|num| !list.contains(&num))
